@@ -101,6 +101,12 @@ const Chart = (props) => {
         var isVideoLoaded = (props.state.videoFilePath !== '');
         var areEventsEmpty = (formattedData.length === 0 && props.state.data.events && props.state.data.events.length === 0);
 
+        // Video has been cleared, reset the chart
+        if (!isVideoLoaded && formattedData.length !== 0) {
+            setFormattedData([]);
+            setDerivedFields([]);
+        }
+
         if (isVideoLoaded && areEventsEmpty) {
             var headerRows = [
                 [

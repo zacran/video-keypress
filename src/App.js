@@ -25,11 +25,19 @@ import Tooltip from '@material-ui/core/Tooltip';
 import Typography from '@material-ui/core/Typography';
 import Grid from '@material-ui/core/Grid';
 import Divider from '@material-ui/core/Divider';
+import Slider from '@material-ui/core/Slider';
 import { makeStyles } from '@material-ui/core/styles';
 
 const SPACE_KEYS = ['32', ' '];
 
 const useStyles = makeStyles((theme) => ({
+    popoverMenu: {
+        width: '200px'
+    },
+    slider: {
+        margin: '0px 20px',
+        width: '80%'
+    },
     button: {
         padding: 0,
     },
@@ -71,7 +79,9 @@ const useStyles = makeStyles((theme) => ({
 const StyledMenu = withStyles({
     paper: {
         border: '1px solid #d3d4d5',
-    },
+        width: '200px',
+        margin: '0px 10px',
+    }
 })((props) => (
     <Menu
         elevation={0}
@@ -82,7 +92,7 @@ const StyledMenu = withStyles({
         }}
         transformOrigin={{
             vertical: 'top',
-            horizontal: 'center',
+            horizontal: 'right',
         }}
         {...props}
     />
@@ -115,12 +125,14 @@ function useInterval(callback, delay) {
 }
 
 const App = () => {
+    var isPlayingBuffer = false;
     const [state, setState] = useState({
         videoFilePath: '',
         isPlaying: false,
         duration: 0,
         playedSeconds: 0,
         loadedSeconds: 0,
+        playbackRate: 1,
         keybinds: KeybindMap.Keybinds,
         data: {
             metadata: {},
@@ -136,7 +148,7 @@ const App = () => {
 
     function resetVideo() {
         hiddenInput.current.value = "";
-        setState({ ...state, videoFilePath: '', videoFileName: '' });
+        setState({ ...state, videoFilePath: '', videoFileName: '', data: { metadata: {}, events: [] } });
     };
 
     const handleDuration = (duration) => {
@@ -175,41 +187,60 @@ const App = () => {
     };
 
     const handleDownloadData = () => {
-        var dataStr = "data:text/json;charset=utf-8," + encodeURIComponent(JSON.stringify(state.data));
-        var downloadAnchorNode = document.createElement('a');
-        downloadAnchorNode.setAttribute("href", dataStr);
-        downloadAnchorNode.setAttribute("download", state.videoFileName + "-scored-behavior.json");
-        document.body.appendChild(downloadAnchorNode); // required for firefox
-        downloadAnchorNode.click();
-        downloadAnchorNode.remove();
+        if (state.data.events && state.data.events.length > 0) {
+            var dataStr = "data:text/json;charset=utf-8," + encodeURIComponent(JSON.stringify(state.data));
+            var downloadAnchorNode = document.createElement('a');
+            downloadAnchorNode.setAttribute("href", dataStr);
+            downloadAnchorNode.setAttribute("download", state.videoFileName + "-scored-behavior.json");
+            document.body.appendChild(downloadAnchorNode); // required for firefox
+            downloadAnchorNode.click();
+            downloadAnchorNode.remove();
+        }
     };
 
-    const handlePlayPause = () => {
-        setState({ ...state, isPlaying: !state.isPlaying });
+    const handleIsPlayingUpdate = () => {
+        isPlayingBuffer = !isPlayingBuffer;
+    };
+
+    const handleOnStartPlay = () => {
+        setState({ ...state, isPlaying: true });
+    };
+
+    const handleOnPauseStop = () => {
+        setState({ ...state, isPlaying: false });
     };
 
     const handleKeydown = (event) => {
         if (state.videoFilePath !== '' && SPACE_KEYS.includes(String(event.key))) {
+            console.log("space " + event.key, state);
             event.preventDefault();
-            handlePlayPause();
-        }
-
-        if (state.isPlaying)
+            handleIsPlayingUpdate();
+        } else if (state.isPlaying) {
             handleKeyevent(event.key, recordKeydown);
-    }
+        }
+    };
 
     const handleKeyup = ({ key }) => {
         handleKeyevent(key, recordKeyup);
-    }
+    };
 
     const handleKeyevent = (key, callback) => {
+        console.log("press " + key, state);
         state.keybinds.forEach(function (keybind) {
             if ((keybind.key === (String(key)) || keybind.code === (String(key)))) {
                 callback(keybind);
             }
         });
+    };
 
-    }
+    const getPlaybackRate = (value) => {
+        return `${value}x`;
+    };
+
+    const handlePlaybackRateChange = (event, value) => {
+        if (value != state.playbackRate)
+            setState({ ...state, playbackRate: parseFloat(value) })
+    };
 
     const recordKeydown = (keybind) => {
         if (!keybind.active) {
@@ -228,7 +259,7 @@ const App = () => {
             console.log("recorded activity start: ", activity);
             console.log(state.activeRecords);
         }
-    }
+    };
 
     const recordKeyup = (keybind) => {
         let activity = state.activeRecords.find(obj => { return obj.key === keybind.key });
@@ -259,8 +290,7 @@ const App = () => {
             });
             console.log(state.data);
         }
-
-    }
+    };
 
     useEventListener('keydown', handleKeydown);
     useEventListener('keyup', handleKeyup);
@@ -269,14 +299,23 @@ const App = () => {
     const hiddenInput = useRef(null);
     const keybindMenu = useRef(null);
 
-    const [anchorEl, setAnchorEl] = useState(null);
+    const [anchorKeybinds, setAnchorKeybinds] = useState(null);
+    const [anchorSettings, setAnchorSettings] = useState(null);
 
     const handleKeybindMenuClick = (event) => {
-        setAnchorEl(event.currentTarget);
+        setAnchorKeybinds(event.currentTarget);
     };
 
     const handleKeybindMenuClose = () => {
-        setAnchorEl(null);
+        setAnchorKeybinds(null);
+    };
+
+    const handleSettingsClick = (event) => {
+        setAnchorSettings(event.currentTarget);
+    };
+
+    const handleSettingsClose = () => {
+        setAnchorSettings(null);
     };
 
 
@@ -284,9 +323,34 @@ const App = () => {
         <div className="App">
             <input type="file" ref={hiddenInput} onChange={handleVideoUpload} style={{ display: 'none' }} />
             <StyledMenu
-                anchorEl={anchorEl}
+                className={classes.popoverMenu}
+                anchorEl={anchorSettings}
                 keepMounted
-                open={Boolean(anchorEl)}
+                open={Boolean(anchorSettings)}
+                onClose={handleSettingsClose}>
+
+                {/* <Typography id="discrete-slider" gutterBottom>Playback Speed</Typography> */}
+                <ListItemText id="playbackRate-slider" primary="Playback Speed" align="center" />
+                <Slider
+                    key={`playbackRate-slider`}
+                    className={classes.slider}
+                    value={state.playbackRate || 1}
+                    getAriaValueText={getPlaybackRate}
+                    aria-labelledby="playbackRate-slider"
+                    step={0.25}
+                    marks
+                    min={0.25}
+                    max={2}
+                    valueLabelDisplay="auto"
+                    onChange={handlePlaybackRateChange}
+                />
+
+            </StyledMenu>
+            <StyledMenu
+                className={classes.popoverMenu}
+                anchorEl={anchorKeybinds}
+                keepMounted
+                open={Boolean(anchorKeybinds)}
                 onClose={handleKeybindMenuClose}>
                 <StyledMenuItem>
                     {state.isPlaying === false && state.playedSeconds === 0 && (
@@ -322,7 +386,10 @@ const App = () => {
                         </Tooltip>
                         <Divider orientation="vertical" flexItem />
                         <Tooltip title="Download Data">
-                            <IconButton aria-label="download data" color="inherit" className={classes.button} onClick={handleDownloadData}>
+                            <IconButton aria-label="download data"
+                                color="inherit"
+                                className={classes.button}
+                                onClick={handleDownloadData}>
                                 <GetAppIcon />
                             </IconButton>
                         </Tooltip>
@@ -341,13 +408,17 @@ const App = () => {
                             <IconButton aria-label="data" color="inherit" className={classes.button}>
                                 <FolderIcon />
                             </IconButton>
-                        </Tooltip>
+                        </Tooltip> */}
                         <Divider orientation="vertical" flexItem />
                         <Tooltip title="Settings">
-                            <IconButton aria-label="settings" color="inherit" className={classes.button}>
+                            <IconButton aria-label="settings"
+                                color="inherit"
+                                aria-haspopup="true"
+                                onClick={handleSettingsClick}
+                                className={classes.button}>
                                 <SettingsIcon />
                             </IconButton>
-                        </Tooltip> */}
+                        </Tooltip>
                     </Grid>
                 </Toolbar>
             </AppBar>
@@ -377,12 +448,17 @@ const App = () => {
                 <div className="VideoPlay">
                     <ReactPlayer url={state.videoFilePath}
                         className="ReactPlayer"
-                        playing={state.isPlaying}
+                        playing={isPlayingBuffer}
                         width="840px"
                         height="100%"
                         controls={true}
                         onDuration={handleDuration}
                         onProgress={handleProgress}
+                        playbackRate={state.playbackRate || 1}
+                        onPause={handleOnPauseStop}
+                        onStop={handleOnPauseStop}
+                        onStart={handleOnStartPlay}
+                        onPlay={handleOnStartPlay}
                     />
                     <div className="Row">
                         <Chart state={state} />
