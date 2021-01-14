@@ -127,11 +127,18 @@ const App = () => {
         derivedFields: []
     });
 
+    const confirmVideoReset = () => {
+        return window.confirm("Are you sure you wish to reset the existing video? Unsaved data will be lost.");
+    };
+
+    const resetData = () => {
+        hiddenInput.current.value = "";
+        setState({ ...state, videoFilePath: '', videoFileName: '', data: { metadata: {}, events: [] } });
+    };
+
     function resetVideo() {
-        var confirmReset = window.confirm("Are you sure you wish to reset the video? Unsaved data will be lost.");
-        if (confirmReset) {
-            hiddenInput.current.value = "";
-            setState({ ...state, videoFilePath: '', videoFileName: '', data: { metadata: {}, events: [] } });
+        if (confirmVideoReset()) {
+            resetData();
         }
     };
 
@@ -141,6 +148,16 @@ const App = () => {
 
     const handleProgress = (progress) => {
         setState({ ...state, playedSeconds: progress.playedSeconds, loadedSeconds: progress.loadedSeconds });
+    };
+
+    const handleVideoSelect = (event) => {
+        if (state.videoFilePath !== '') {
+            if (!confirmVideoReset()) {
+                return;
+            }
+        }
+        resetData();
+        hiddenInput.current.click();
     };
 
     const handleVideoUpload = (event) => {
@@ -364,7 +381,7 @@ const App = () => {
                     <Typography variant="h5" component="h1" className={classes.title}>Behavior Recorder</Typography>
                     <Grid container alignItems="center" className={classes.menu}>
                         <Tooltip title="Select Video">
-                            <IconButton aria-label="select video" color="inherit" className={classes.button} onClick={(e) => hiddenInput.current.click()}>
+                            <IconButton aria-label="select video" color="inherit" className={classes.button} onClick={(e) => handleVideoSelect(e)}>
                                 <MovieIcon />
                             </IconButton>
                         </Tooltip>
@@ -422,7 +439,7 @@ const App = () => {
                         No video selected
                     </Typography>
                     <Tooltip title="Select Video">
-                        <IconButton aria-label="select video" color="inherit" className={classes.largeButton} onClick={(e) => hiddenInput.current.click()}>
+                        <IconButton aria-label="select video" color="inherit" className={classes.largeButton} onClick={(e) => handleVideoSelect(e)}>
                             <MovieIcon />
                         </IconButton>
                     </Tooltip>
