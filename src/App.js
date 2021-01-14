@@ -109,21 +109,6 @@ const StyledMenuItem = withStyles((theme) => ({
     },
 }))(MenuItem);
 
-function useInterval(callback, delay) {
-    const savedCallback = useRef();
-
-    useEffect(() => {
-        savedCallback.current = callback;
-    }, [callback]);
-
-    useEffect(() => {
-        let id = setInterval(() => {
-            savedCallback.current();
-        }, delay);
-        return () => clearInterval(id);
-    }, [delay]);
-}
-
 const App = () => {
     var isPlayingBuffer = false;
     const [state, setState] = useState({
@@ -142,13 +127,12 @@ const App = () => {
         derivedFields: []
     });
 
-    // useInterval(() => {
-    //     setState(state);
-    // }, 10);
-
     function resetVideo() {
-        hiddenInput.current.value = "";
-        setState({ ...state, videoFilePath: '', videoFileName: '', data: { metadata: {}, events: [] } });
+        var confirmReset = window.confirm("Are you sure you wish to reset the video? Unsaved data will be lost.");
+        if (confirmReset) {
+            hiddenInput.current.value = "";
+            setState({ ...state, videoFilePath: '', videoFileName: '', data: { metadata: {}, events: [] } });
+        }
     };
 
     const handleDuration = (duration) => {
