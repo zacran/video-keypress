@@ -1,4 +1,4 @@
-import React, { useState, useEffect, Component } from "react";
+import React, { useState, useEffect } from "react";
 import { Chart as GoogleChart } from "react-google-charts";
 import Typography from '@material-ui/core/Typography';
 import Grid from '@material-ui/core/Grid';
@@ -73,7 +73,7 @@ const Chart = (props) => {
             console.log("finding derived fields for " + behavior + " found " + matchingEvents.length + " events");
 
             occurences = matchingEvents.length;
-            matchingEvents.map(event => {
+            matchingEvents.forEach(event => {
                 totalDuration += (event[3] - event[2]);
             });
 
@@ -137,7 +137,7 @@ const Chart = (props) => {
 
             // Seach existing records for similar start, end, duration times and adjust by the MIN_EVENT_DURATION
             // This is to account for key presses that happen faster than the update cycle of React
-            var similarEvent = props.state.data.events.find(obj => {
+            props.state.data.events.forEach(obj => {
                 if (obj.id !== latestEvent.id) {
                     if (obj.start === latestEvent.start) {
                         console.warn("Adjusted event start time due to existing similar events: " + latestEvent.id);
@@ -198,10 +198,11 @@ const Chart = (props) => {
                     </Grid>
                 )
                 : ""}
-            <div className="GoogleChart">
+            <div id="chart-container" className="GoogleChart">
                 {
                     formattedData.length > 1 ?
                         <GoogleChart
+
                             width={'840px'}
                             height={'100%'}
                             chartType="Timeline"
@@ -209,13 +210,8 @@ const Chart = (props) => {
                             options={{
                                 timeline: {
                                     colorByRowLabel: true,
-                                    margin: 'auto'
-                                },
-                            }}
-                            options={{
-                                timeline: {
+                                    margin: 'auto',
                                     showBarLabels: false,
-                                    colorByRowLabel: true
                                 },
                                 colors: ['transparent', '#469FAE', '#3ECDB6', '#F7D9A6', '#F67E5C', '#CA1252', '#DD5B5C', '#D9959A', '#938D99', '#5E614A'],
                             }}
