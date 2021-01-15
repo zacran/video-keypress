@@ -213,7 +213,7 @@ const Chart = (props) => {
                                     margin: 'auto',
                                     showBarLabels: false,
                                 },
-                                colors: ['transparent', '#469FAE', '#3ECDB6', '#F7D9A6', '#F67E5C', '#CA1252', '#DD5B5C', '#D9959A', '#938D99', '#5E614A'],
+                                colors: ['transparent', '#469FAE', '#3ECDB6', '#C09BD8', '#F67E5C', '#CA1252', '#DD5B5C', '#D9959A', '#938D99', '#5E614A'],
                             }}
                             rootProps={{ 'data-testid': '6' }}
                         />
