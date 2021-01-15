@@ -17,6 +17,7 @@ import KeybindMap from "./hooks/keybindMap"
 import ImageIcon from '@material-ui/icons/Image';
 import FolderIcon from '@material-ui/icons/Folder';
 import DeleteIcon from '@material-ui/icons/Delete';
+import GitHubIcon from '@material-ui/icons/GitHub';
 import MovieIcon from '@material-ui/icons/Movie';
 import GetAppIcon from '@material-ui/icons/GetApp';
 import KeyboardIcon from '@material-ui/icons/Keyboard';
@@ -27,7 +28,9 @@ import Typography from '@material-ui/core/Typography';
 import Grid from '@material-ui/core/Grid';
 import Divider from '@material-ui/core/Divider';
 import Slider from '@material-ui/core/Slider';
+import BottomNavigation from '@material-ui/core/BottomNavigation';
 import { makeStyles } from '@material-ui/core/styles';
+import { Autorenew } from "@material-ui/icons";
 
 const SPACE_KEYS = ['32', ' '];
 
@@ -63,6 +66,17 @@ const useStyles = makeStyles((theme) => ({
     },
     title: {
         flexGrow: 1,
+    },
+    bottomAppBar: {
+        top: 'auto',
+        bottom: 0,
+    },
+    bottomToolbar: {
+        margin: 'auto',
+        minWidth: '700px',
+        textAlign: 'center',
+        minHeight: 32,
+        maxHeight: 32,
     },
     menu: {
         width: 'fit-content',
@@ -213,6 +227,10 @@ const App = () => {
         document.body.appendChild(downloadLink);
         downloadLink.click();
         document.body.removeChild(downloadLink);
+    };
+
+    const handleNavigateToGitHub = () => {
+        window.open('https://github.com/zacran/video-keypress', '_blank');
     };
 
     const handleIsPlayingUpdate = () => {
@@ -491,7 +509,33 @@ const App = () => {
                     </div>
                 </div>
             </div>
-        </div>
+            <AppBar position="fixed" color="transparent" className={classes.bottomAppBar}>
+                <Toolbar className={classes.bottomToolbar}>
+                    <Grid container alignItems="center" spacing={2}>
+                        <Grid item xs={6}>
+                            <Typography variant="caption" align="center" gutterBottom>
+                                No data is transfered. All data remains in your browser.
+                            </Typography>
+                        </Grid>
+                        <Grid item xs={1}>
+                            <Tooltip title="Visit GitHub Repo">
+                                <IconButton aria-label="visit github repo"
+                                    color="inherit"
+                                    className={classes.button}
+                                    onClick={handleNavigateToGitHub}>
+                                    <GitHubIcon />
+                                </IconButton>
+                            </Tooltip>
+                        </Grid>
+                        <Grid item xs={3}>
+                            <Typography variant="caption" align="center" gutterBottom>
+                                GNU General Public License
+                            </Typography>
+                        </Grid>
+                    </Grid>
+                </Toolbar>
+            </AppBar>
+        </div >
     );
 }
 
