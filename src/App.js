@@ -14,6 +14,7 @@ import CancelIcon from '@material-ui/icons/Cancel';
 import ReactPlayer from "react-player";
 import useEventListener from "@use-it/event-listener";
 import KeybindMap from "./hooks/keybindMap"
+import ImageIcon from '@material-ui/icons/Image';
 import FolderIcon from '@material-ui/icons/Folder';
 import DeleteIcon from '@material-ui/icons/Delete';
 import MovieIcon from '@material-ui/icons/Movie';
@@ -199,6 +200,21 @@ const App = () => {
         }
     };
 
+    const handleDownloadSVG = () => {
+        var chartContainer = document.getElementById('chart-container');
+        var svgData = chartContainer.getElementsByTagName('svg')[0].outerHTML;
+        svgData = svgData.replace("<svg", "<svg xmlns=\"http://www.w3.org/2000/svg\"");
+
+        var svgBlob = new Blob([svgData], { type: "image/svg+xml;charset=utf-8" });
+        var svgUrl = URL.createObjectURL(svgBlob);
+        var downloadLink = document.createElement("a");
+        downloadLink.href = svgUrl;
+        downloadLink.download = state.videoFileName + "-scored-behavior.svg";
+        document.body.appendChild(downloadLink);
+        downloadLink.click();
+        document.body.removeChild(downloadLink);
+    };
+
     const handleIsPlayingUpdate = () => {
         isPlayingBuffer = !isPlayingBuffer;
     };
@@ -239,7 +255,7 @@ const App = () => {
     };
 
     const handlePlaybackRateChange = (event, value) => {
-        if (value != state.playbackRate)
+        if (value !== state.playbackRate)
             setState({ ...state, playbackRate: parseFloat(value) })
     };
 
@@ -392,6 +408,15 @@ const App = () => {
                                 className={classes.button}
                                 onClick={handleDownloadData}>
                                 <GetAppIcon />
+                            </IconButton>
+                        </Tooltip>
+                        <Divider orientation="vertical" flexItem />
+                        <Tooltip title="Download SVG">
+                            <IconButton aria-label="download svg"
+                                color="inherit"
+                                className={classes.button}
+                                onClick={handleDownloadSVG}>
+                                <ImageIcon />
                             </IconButton>
                         </Tooltip>
                         <Divider orientation="vertical" flexItem />
