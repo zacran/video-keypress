@@ -28,9 +28,7 @@ import Typography from '@material-ui/core/Typography';
 import Grid from '@material-ui/core/Grid';
 import Divider from '@material-ui/core/Divider';
 import Slider from '@material-ui/core/Slider';
-import BottomNavigation from '@material-ui/core/BottomNavigation';
 import { makeStyles } from '@material-ui/core/styles';
-import { Autorenew } from "@material-ui/icons";
 
 const SPACE_KEYS = ['32', ' '];
 
