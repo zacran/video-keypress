@@ -330,7 +330,6 @@ const App = () => {
 
     const classes = useStyles();
     const hiddenInput = useRef(null);
-    const keybindMenu = useRef(null);
 
     const [anchorKeybinds, setAnchorKeybinds] = useState(null);
     const [anchorSettings, setAnchorSettings] = useState(null);
