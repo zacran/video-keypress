@@ -1,8 +1,8 @@
 {
   "files": {
-    "main.css": "/video-keypress/static/css/main.c9df97bb.chunk.css",
-    "main.js": "/video-keypress/static/js/main.9be61c33.chunk.js",
-    "main.js.map": "/video-keypress/static/js/main.9be61c33.chunk.js.map",
+    "main.css": "/video-keypress/static/css/main.d12c8f2a.chunk.css",
+    "main.js": "/video-keypress/static/js/main.11091d37.chunk.js",
+    "main.js.map": "/video-keypress/static/js/main.11091d37.chunk.js.map",
     "runtime-main.js": "/video-keypress/static/js/runtime-main.b223faa5.js",
     "runtime-main.js.map": "/video-keypress/static/js/runtime-main.b223faa5.js.map",
     "static/css/2.09b228a8.chunk.css": "/video-keypress/static/css/2.09b228a8.chunk.css",
@@ -10,7 +10,7 @@
     "static/js/2.d8ac0661.chunk.js.map": "/video-keypress/static/js/2.d8ac0661.chunk.js.map",
     "index.html": "/video-keypress/index.html",
     "static/css/2.09b228a8.chunk.css.map": "/video-keypress/static/css/2.09b228a8.chunk.css.map",
-    "static/css/main.c9df97bb.chunk.css.map": "/video-keypress/static/css/main.c9df97bb.chunk.css.map",
+    "static/css/main.d12c8f2a.chunk.css.map": "/video-keypress/static/css/main.d12c8f2a.chunk.css.map",
     "static/js/2.d8ac0661.chunk.js.LICENSE.txt": "/video-keypress/static/js/2.d8ac0661.chunk.js.LICENSE.txt",
     "static/media/index.css": "/video-keypress/static/media/roboto-vietnamese-400-normal.52cebac0.woff2"
   },
@@ -18,7 +18,7 @@
     "static/js/runtime-main.b223faa5.js",
     "static/css/2.09b228a8.chunk.css",
     "static/js/2.d8ac0661.chunk.js",
-    "static/css/main.c9df97bb.chunk.css",
-    "static/js/main.9be61c33.chunk.js"
+    "static/css/main.d12c8f2a.chunk.css",
+    "static/js/main.11091d37.chunk.js"
   ]
 }
