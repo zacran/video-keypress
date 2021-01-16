@@ -15,6 +15,8 @@ function convertToMilliseconds(value) {
 }
 
 function formatTime(value) {
+    var fixedValue = value.toFixed(2);
+    if (isNaN(fixedValue)) fixedValue = 0;
     return `${value.toFixed(2)}ms`;
 }
 
@@ -56,6 +58,7 @@ const Chart = (props) => {
         // Remove header row of formatted data
         var data = formattedData.filter(obj => typeof obj[0] === 'string' && obj[1] !== 'Meta');
         console.log(formattedData);
+
         // Find unqiue behaviors in existing data
         const uniqueBehaviors = [];
         data.forEach(event => {
@@ -74,17 +77,22 @@ const Chart = (props) => {
             var order = keybindMap.filter(keybind => keybind.behavior === behavior).order;
             console.log("finding derived fields for " + behavior + " found " + matchingEvents.length + " events");
 
-            occurences = matchingEvents.length;
+            // Minus 1 to factor for placeholder events to force order of Derived Fields
+            occurences = matchingEvents.length - 1;
+
             matchingEvents.forEach(event => {
                 totalDuration += (event[3] - event[2]);
             });
+
+            var avgDuration = (totalDuration / occurences);
+            if (occurences === 0) avgDuration = 0;
 
             var derivedField = {
                 order: order,
                 behavior: behavior,
                 occurences: occurences,
                 totalDuration: totalDuration,
-                avgDuration: (totalDuration / occurences)
+                avgDuration: avgDuration
             }
 
             tempDerivedFields.push(derivedField);
@@ -127,7 +135,7 @@ const Chart = (props) => {
 
             // Adding empty Behavior records to force a consistent order
             props.state.keybinds.forEach(obj => {
-                headerRows.push([obj.behavior, "Meta", 0, 0]);
+                headerRows.push([obj.behavior, "", 0, 0]);
             });
             setFormattedData(headerRows);
         }
