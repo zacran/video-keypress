@@ -7,7 +7,7 @@
 
 .Row {
   justify-content: center;
-  margin: 5px;
+  margin: 15px;
 }
 
 .Row .VideoPlay {
@@ -109,6 +109,6 @@ button:hover, .button-active {
   margin: 5px 0;
 }
 
-.ReactPlayer, .GoogleChart > div {
+.GoogleChart > div {
   margin: auto;
 }

@@ -33,6 +33,12 @@ import { makeStyles } from '@material-ui/core/styles';
 const SPACE_KEYS = ['32', ' '];
 
 const useStyles = makeStyles((theme) => ({
+    content: {
+        marginTop: '55px'
+    },
+    reactPlayer: {
+        margin: 'auto'
+    },
     popoverMenu: {
         width: '200px'
     },
@@ -361,7 +367,6 @@ const App = () => {
                 open={Boolean(anchorSettings)}
                 onClose={handleSettingsClose}>
 
-                {/* <Typography id="discrete-slider" gutterBottom>Playback Speed</Typography> */}
                 <ListItemText id="playbackRate-slider" primary="Playback Speed" align="center" />
                 <Slider
                     key={`playbackRate-slider`}
@@ -407,9 +412,9 @@ const App = () => {
                     <ListItemText secondary="Add Keybind" align="center" />
                 </StyledMenuItem> */}
             </StyledMenu>
-            <AppBar position="static" style={{ background: '#469FAE' }}>
+            <AppBar position="fixed" style={{ background: '#469FAE' }}>
                 <Toolbar className={classes.toolbar}>
-                    <Typography variant="h5" component="h1" className={classes.title}>Behavior Recorder</Typography>
+                    <Typography variant="h5" component="h1" className={classes.title}>Video Keypress</Typography>
                     <Grid container alignItems="center" className={classes.menu}>
                         <Tooltip title="Select Video">
                             <IconButton aria-label="select video" color="inherit" className={classes.button} onClick={(e) => handleVideoSelect(e)}>
@@ -463,49 +468,52 @@ const App = () => {
                     </Grid>
                 </Toolbar>
             </AppBar>
-            {state.videoFilePath ?
-                <Typography variant="button" display="block" align="center" gutterBottom>
-                    Current Video: {state.videoFileName}
-                    <Tooltip title="Unset Video">
-                        <IconButton aria-label="unset video" color="inherit" className={classes.smallButton} onClick={resetVideo}>
-                            <CancelIcon />
-                        </IconButton>
-                    </Tooltip>
-                </Typography>
-                : ""}
-            {!state.videoFilePath ?
-                <div>
+            <div className={classes.content}>
+                {state.videoFilePath ?
                     <Typography variant="button" display="block" align="center" gutterBottom>
-                        No video selected
+                        Current Video: {state.videoFileName}
+                        <Tooltip title="Unset Video">
+                            <IconButton aria-label="unset video" color="inherit" className={classes.smallButton} onClick={resetVideo}>
+                                <CancelIcon />
+                            </IconButton>
+                        </Tooltip>
                     </Typography>
-                    <Tooltip title="Select Video">
-                        <IconButton aria-label="select video" color="inherit" className={classes.largeButton} onClick={(e) => handleVideoSelect(e)}>
-                            <MovieIcon />
-                        </IconButton>
-                    </Tooltip>
-                </div>
-                : ""}
-            <div className="Row">
-                <div className="VideoPlay">
-                    <ReactPlayer url={state.videoFilePath}
-                        className="ReactPlayer"
-                        playing={isPlayingBuffer}
-                        width="840px"
-                        height="100%"
-                        controls={true}
-                        onDuration={handleDuration}
-                        onProgress={handleProgress}
-                        playbackRate={state.playbackRate || 1}
-                        onPause={handleOnPauseStop}
-                        onStop={handleOnPauseStop}
-                        onStart={handleOnStartPlay}
-                        onPlay={handleOnStartPlay}
-                    />
-                    <div className="Row">
-                        <Chart state={state} />
+                    : ""}
+                {!state.videoFilePath ?
+                    <div>
+                        <Typography variant="button" display="block" align="center" gutterBottom>
+                            No video selected
+                    </Typography>
+                        <Tooltip title="Select Video">
+                            <IconButton aria-label="select video" color="inherit" className={classes.largeButton} onClick={(e) => handleVideoSelect(e)}>
+                                <MovieIcon />
+                            </IconButton>
+                        </Tooltip>
+                    </div>
+                    : ""}
+                <div className="Row">
+                    <div className="VideoPlay">
+                        <ReactPlayer url={state.videoFilePath}
+                            className={classes.reactPlayer}
+                            playing={isPlayingBuffer}
+                            width="840px"
+                            height="100%"
+                            controls={true}
+                            onDuration={handleDuration}
+                            onProgress={handleProgress}
+                            playbackRate={state.playbackRate || 1}
+                            onPause={handleOnPauseStop}
+                            onStop={handleOnPauseStop}
+                            onStart={handleOnStartPlay}
+                            onPlay={handleOnStartPlay}
+                        />
+                        <div className="Row">
+                            <Chart state={state} />
+                        </div>
                     </div>
                 </div>
             </div>
+
             <AppBar position="fixed" color="transparent" className={classes.bottomAppBar}>
                 <Toolbar className={classes.bottomToolbar}>
                     <Grid container alignItems="center" spacing={2}>
