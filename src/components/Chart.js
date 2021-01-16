@@ -3,6 +3,7 @@ import { Chart as GoogleChart } from "react-google-charts";
 import Typography from '@material-ui/core/Typography';
 import Grid from '@material-ui/core/Grid';
 import Paper from '@material-ui/core/Paper';
+import KeybindMap from "../hooks/keybindMap"
 import { makeStyles } from '@material-ui/core/styles';
 import "../App.css";
 
@@ -14,6 +15,8 @@ function convertToMilliseconds(value) {
 }
 
 function formatTime(value) {
+    var fixedValue = value.toFixed(2);
+    if (isNaN(fixedValue)) fixedValue = 0;
     return `${value.toFixed(2)}ms`;
 }
 
@@ -55,6 +58,7 @@ const Chart = (props) => {
         // Remove header row of formatted data
         var data = formattedData.filter(obj => typeof obj[0] === 'string' && obj[1] !== 'Meta');
         console.log(formattedData);
+
         // Find unqiue behaviors in existing data
         const uniqueBehaviors = [];
         data.forEach(event => {
@@ -64,28 +68,38 @@ const Chart = (props) => {
         });
 
         var tempDerivedFields = [];
+        const keybindMap = KeybindMap.Keybinds;
 
         // Derive fields for each unique behavior
         uniqueBehaviors.forEach(behavior => {
             var occurences = 0, totalDuration = 0;
             var matchingEvents = data.filter(event => event[0] === behavior);
-
+            var order = keybindMap.filter(keybind => keybind.behavior === behavior).order;
             console.log("finding derived fields for " + behavior + " found " + matchingEvents.length + " events");
 
-            occurences = matchingEvents.length;
+            // Minus 1 to factor for placeholder events to force order of Derived Fields
+            occurences = matchingEvents.length - 1;
+
             matchingEvents.forEach(event => {
                 totalDuration += (event[3] - event[2]);
             });
 
+            var avgDuration = (totalDuration / occurences);
+            if (occurences === 0) avgDuration = 0;
+
             var derivedField = {
+                order: order,
                 behavior: behavior,
                 occurences: occurences,
                 totalDuration: totalDuration,
-                avgDuration: (totalDuration / occurences)
+                avgDuration: avgDuration
             }
 
             tempDerivedFields.push(derivedField);
         });
+
+        // Sort derived fields by order property
+        tempDerivedFields.sort((a, b) => (a.order > b.order) ? 1 : -1);
 
         setDerivedFields((derivedFields) => {
             derivedFields = tempDerivedFields;
@@ -93,7 +107,6 @@ const Chart = (props) => {
 
             return derivedFields;
         });
-
         props.state.derivedFields = derivedFields;
     };
 
@@ -119,6 +132,11 @@ const Chart = (props) => {
                     "Behavior", "Meta", 0, convertToMilliseconds(props.state.data.metadata.duration)
                 ]
             ];
+
+            // Adding empty Behavior records to force a consistent order
+            props.state.keybinds.forEach(obj => {
+                headerRows.push([obj.behavior, "", 0, 0]);
+            });
             setFormattedData(headerRows);
         }
 
@@ -202,9 +220,8 @@ const Chart = (props) => {
                 {
                     formattedData.length > 1 ?
                         <GoogleChart
-
                             width={'840px'}
-                            height={'100%'}
+                            height={'400px'}
                             chartType="Timeline"
                             data={formattedData}
                             options={{
