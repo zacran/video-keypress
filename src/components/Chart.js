@@ -3,6 +3,7 @@ import { Chart as GoogleChart } from "react-google-charts";
 import Typography from '@material-ui/core/Typography';
 import Grid from '@material-ui/core/Grid';
 import Paper from '@material-ui/core/Paper';
+import KeybindMap from "../hooks/keybindMap"
 import { makeStyles } from '@material-ui/core/styles';
 import "../App.css";
 
@@ -64,12 +65,13 @@ const Chart = (props) => {
         });
 
         var tempDerivedFields = [];
+        const keybindMap = KeybindMap.Keybinds;
 
         // Derive fields for each unique behavior
         uniqueBehaviors.forEach(behavior => {
             var occurences = 0, totalDuration = 0;
             var matchingEvents = data.filter(event => event[0] === behavior);
-
+            var order = keybindMap.filter(keybind => keybind.behavior === behavior).order;
             console.log("finding derived fields for " + behavior + " found " + matchingEvents.length + " events");
 
             occurences = matchingEvents.length;
@@ -78,6 +80,7 @@ const Chart = (props) => {
             });
 
             var derivedField = {
+                order: order,
                 behavior: behavior,
                 occurences: occurences,
                 totalDuration: totalDuration,
@@ -87,13 +90,15 @@ const Chart = (props) => {
             tempDerivedFields.push(derivedField);
         });
 
+        // Sort derived fields by order property
+        tempDerivedFields.sort((a, b) => (a.order > b.order) ? 1 : -1);
+
         setDerivedFields((derivedFields) => {
             derivedFields = tempDerivedFields;
             console.log(derivedFields);
 
             return derivedFields;
         });
-
         props.state.derivedFields = derivedFields;
     };
 
@@ -119,6 +124,11 @@ const Chart = (props) => {
                     "Behavior", "Meta", 0, convertToMilliseconds(props.state.data.metadata.duration)
                 ]
             ];
+
+            // Adding empty Behavior records to force a consistent order
+            props.state.keybinds.forEach(obj => {
+                headerRows.push([obj.behavior, "Meta", 0, 0]);
+            });
             setFormattedData(headerRows);
         }
 
@@ -202,9 +212,8 @@ const Chart = (props) => {
                 {
                     formattedData.length > 1 ?
                         <GoogleChart
-
                             width={'840px'}
-                            height={'100%'}
+                            height={'400px'}
                             chartType="Timeline"
                             data={formattedData}
                             options={{
