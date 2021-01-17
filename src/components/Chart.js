@@ -77,8 +77,7 @@ const Chart = (props) => {
             var order = keybindMap.filter(keybind => keybind.behavior === behavior).order;
             console.log("finding derived fields for " + behavior + " found " + matchingEvents.length + " events");
 
-            // Minus 1 to factor for placeholder events to force order of Derived Fields
-            occurences = matchingEvents.length - 1;
+            occurences = matchingEvents.length;
 
             matchingEvents.forEach(event => {
                 totalDuration += (event[3] - event[2]);
@@ -135,7 +134,7 @@ const Chart = (props) => {
 
             // Adding empty Behavior records to force a consistent order
             props.state.keybinds.forEach(obj => {
-                headerRows.push([obj.behavior, "", 0, 0]);
+                headerRows.push([obj.behavior, "Meta", 0, 0]);
             });
             setFormattedData(headerRows);
         }
@@ -143,7 +142,7 @@ const Chart = (props) => {
         // Check if events exist to avoid running code when idle
         var eventsExist = (props.state.data.events && props.state.data.events.length > 0);
         // Check if a new event exists -- length of data.events plus 2 base header rows
-        var newEventExists = (props.state.data.events.length + 2 > formattedData.length);
+        var newEventExists = (props.state.data.events.length + (2 + props.state.keybinds.length) > formattedData.length);
 
         // Add new event and compute derived fields when new record is persisted
         if (eventsExist && newEventExists) {

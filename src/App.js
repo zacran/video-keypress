@@ -503,7 +503,6 @@ const App = () => {
                             onProgress={handleProgress}
                             playbackRate={state.playbackRate || 1}
                             onPause={handleOnPauseStop}
-                            onStop={handleOnPauseStop}
                             onStart={handleOnStartPlay}
                             onPlay={handleOnStartPlay}
                         />
