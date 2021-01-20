@@ -1,6 +1,7 @@
 import React, { useState, useEffect, useRef } from "react";
 import "./App.css";
 import 'fontsource-roboto';
+import packageJson from '../package.json';
 import { withStyles } from '@material-ui/core/styles';
 import Menu from '@material-ui/core/Menu';
 import MenuItem from '@material-ui/core/MenuItem';
@@ -15,6 +16,7 @@ import ReactPlayer from "react-player";
 import useEventListener from "@use-it/event-listener";
 import KeybindMap from "./hooks/keybindMap"
 import ImageIcon from '@material-ui/icons/Image';
+import PublishIcon from '@material-ui/icons/Publish';
 import FolderIcon from '@material-ui/icons/Folder';
 import DeleteIcon from '@material-ui/icons/Delete';
 import GitHubIcon from '@material-ui/icons/GitHub';
@@ -68,6 +70,13 @@ const useStyles = makeStyles((theme) => ({
         minHeight: 48,
         maxHeight: 48,
     },
+    restrictedText: {
+        overflow: 'hidden',
+        whiteSpace: 'nowrap',
+        textOverflow: 'ellipsis',
+        display: 'inline-block',
+        maxWidth: '400px'
+    },
     title: {
         flexGrow: 1,
     },
@@ -82,7 +91,17 @@ const useStyles = makeStyles((theme) => ({
         minHeight: 32,
         maxHeight: 32,
     },
-    menu: {
+    currentVideoMenu: {
+        width: 'fit-content',
+        marginRight: '10px',
+        '& svg': {
+            margin: theme.spacing(1.5),
+        },
+        '& hr': {
+            margin: theme.spacing(0, 0.5),
+        },
+    },
+    globalMenu: {
         width: 'fit-content',
         border: `1px solid ${theme.palette.divider}`,
         borderRadius: theme.shape.borderRadius,
@@ -204,6 +223,10 @@ const App = () => {
                 document.activeElement.blur();
             });
         }
+    };
+
+    const handleUploadData = () => {
+
     };
 
     const handleDownloadData = () => {
@@ -415,13 +438,13 @@ const App = () => {
             <AppBar position="fixed" style={{ background: '#469FAE' }}>
                 <Toolbar className={classes.toolbar}>
                     <Typography variant="h5" component="h1" className={classes.title}>Video Keypress</Typography>
-                    <Grid container alignItems="center" className={classes.menu}>
-                        <Tooltip title="Select Video">
-                            <IconButton aria-label="select video" color="inherit" className={classes.button} onClick={(e) => handleVideoSelect(e)}>
-                                <MovieIcon />
-                            </IconButton>
-                        </Tooltip>
-                        <Divider orientation="vertical" flexItem />
+                    <Grid container alignItems="center" className={classes.currentVideoMenu}>
+                        <Grid item>
+                            <Typography variant="caption" display="block">Current Video:</Typography>
+                            <Typography variant="overline" className={classes.restrictedText}>VideoName nd on.mp4</Typography>
+                        </Grid>
+
+
                         <Tooltip title="Download Data">
                             <IconButton aria-label="download data"
                                 color="inherit"
@@ -430,13 +453,29 @@ const App = () => {
                                 <GetAppIcon />
                             </IconButton>
                         </Tooltip>
-                        <Divider orientation="vertical" flexItem />
+
                         <Tooltip title="Download SVG">
                             <IconButton aria-label="download svg"
                                 color="inherit"
                                 className={classes.button}
                                 onClick={handleDownloadSVG}>
                                 <ImageIcon />
+                            </IconButton>
+                        </Tooltip>
+                    </Grid>
+                    <Grid container alignItems="center" className={classes.globalMenu}>
+                        <Tooltip title="Upload Data">
+                            <IconButton aria-label="upload data"
+                                color="inherit"
+                                className={classes.button}
+                                onClick={handleUploadData}>
+                                <PublishIcon />
+                            </IconButton>
+                        </Tooltip>
+                        <Divider orientation="vertical" flexItem />
+                        <Tooltip title="Select Video">
+                            <IconButton aria-label="select video" color="inherit" className={classes.button} onClick={(e) => handleVideoSelect(e)}>
+                                <MovieIcon />
                             </IconButton>
                         </Tooltip>
                         <Divider orientation="vertical" flexItem />
@@ -530,6 +569,11 @@ const App = () => {
                                     <GitHubIcon />
                                 </IconButton>
                             </Tooltip>
+                        </Grid>
+                        <Grid item xs={1}>
+                            <Typography variant="caption" align="center" gutterBottom>
+                                v{packageJson.version}
+                            </Typography>
                         </Grid>
                         <Grid item xs={3}>
                             <Typography variant="caption" align="center" gutterBottom>
