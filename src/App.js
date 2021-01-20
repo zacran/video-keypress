@@ -48,6 +48,14 @@ const useStyles = makeStyles((theme) => ({
         margin: '0px 20px',
         width: '80%'
     },
+    dataText: {
+        height: '420px',
+        width: '840px',
+        overflow: 'scroll',
+        margin: 'auto',
+        border: `1px solid ${theme.palette.divider}`,
+        borderRadius: theme.shape.borderRadius,
+    },
     button: {
         padding: 0,
     },
@@ -74,8 +82,8 @@ const useStyles = makeStyles((theme) => ({
         overflow: 'hidden',
         whiteSpace: 'nowrap',
         textOverflow: 'ellipsis',
-        display: 'inline-block',
-        maxWidth: '400px'
+        margin: '0px 10px',
+        maxWidth: '300px'
     },
     title: {
         flexGrow: 1,
@@ -91,17 +99,7 @@ const useStyles = makeStyles((theme) => ({
         minHeight: 32,
         maxHeight: 32,
     },
-    currentVideoMenu: {
-        width: 'fit-content',
-        marginRight: '10px',
-        '& svg': {
-            margin: theme.spacing(1.5),
-        },
-        '& hr': {
-            margin: theme.spacing(0, 0.5),
-        },
-    },
-    globalMenu: {
+    menu: {
         width: 'fit-content',
         border: `1px solid ${theme.palette.divider}`,
         borderRadius: theme.shape.borderRadius,
@@ -150,7 +148,8 @@ const StyledMenuItem = withStyles((theme) => ({
 const App = () => {
     var isPlayingBuffer = false;
     const [state, setState] = useState({
-        videoFilePath: '',
+        dataFileName: '',
+        isVideo: false,
         isPlaying: false,
         duration: 0,
         playedSeconds: 0,
@@ -170,8 +169,17 @@ const App = () => {
     };
 
     const resetData = () => {
-        hiddenInput.current.value = "";
-        setState({ ...state, videoFilePath: '', videoFileName: '', data: { metadata: {}, events: [] } });
+        hiddenVideoUpload.current.value = "";
+        setState({
+            ...state,
+            dataFileName: '',
+            isVideo: false,
+            isPlaying: false,
+            data: {
+                metadata: {},
+                events: []
+            }
+        });
     };
 
     function resetVideo() {
@@ -189,13 +197,13 @@ const App = () => {
     };
 
     const handleVideoSelect = (event) => {
-        if (state.videoFilePath !== '') {
+        if (state.dataFileName !== '') {
             if (!confirmVideoReset()) {
                 return;
             }
         }
         resetData();
-        hiddenInput.current.click();
+        hiddenVideoUpload.current.click();
     };
 
     const handleVideoUpload = (event) => {
@@ -209,7 +217,8 @@ const App = () => {
                 setState({
                     ...state,
                     videoFilePath: videoFilePath,
-                    videoFileName: event.target.files[0].name,
+                    dataFileName: event.target.files[0].name,
+                    isVideo: true,
                     data: {
                         metadata: {
                             fileName: event.target.files[0].name,
@@ -225,8 +234,31 @@ const App = () => {
         }
     };
 
-    const handleUploadData = () => {
+    const handleDataSelect = () => {
+        if (state.dataFileName !== '') {
+            if (!confirmVideoReset()) {
+                return;
+            }
+        }
+        resetData();
+        hiddenDataUpload.current.click();
+    };
 
+    const handleDataUpload = (event) => {
+        const fileReader = new FileReader();
+        fileReader.readAsText(event.target.files[0], "UTF-8");
+        var fileName = event.target.files[0].name;
+        fileReader.onload = event => {
+            // Validate data
+            var obj = JSON.parse(event.target.result);
+            if (obj.events && Array.isArray(obj.events) && obj.metadata && obj.metadata.fileName) {
+                console.log("Uploaded data passed validation");
+                console.log("fileName", fileName);
+                setState({ ...state, dataFileName: fileName, data: obj });
+            } else {
+                console.warn("Uploaded data not valid.")
+            }
+        };
     };
 
     const handleDownloadData = () => {
@@ -234,7 +266,7 @@ const App = () => {
             var dataStr = "data:text/json;charset=utf-8," + encodeURIComponent(JSON.stringify(state.data));
             var downloadAnchorNode = document.createElement('a');
             downloadAnchorNode.setAttribute("href", dataStr);
-            downloadAnchorNode.setAttribute("download", state.videoFileName + "-scored-behavior.json");
+            downloadAnchorNode.setAttribute("download", state.dataFileName + "-scored-behavior.json");
             document.body.appendChild(downloadAnchorNode); // required for firefox
             downloadAnchorNode.click();
             downloadAnchorNode.remove();
@@ -242,18 +274,20 @@ const App = () => {
     };
 
     const handleDownloadSVG = () => {
-        var chartContainer = document.getElementById('chart-container');
-        var svgData = chartContainer.getElementsByTagName('svg')[0].outerHTML;
-        svgData = svgData.replace("<svg", "<svg xmlns=\"http://www.w3.org/2000/svg\"");
+        if (state.data.events && state.data.events.length > 0) {
+            var chartContainer = document.getElementById('chart-container');
+            var svgData = chartContainer.getElementsByTagName('svg')[0].outerHTML;
+            svgData = svgData.replace("<svg", "<svg xmlns=\"http://www.w3.org/2000/svg\"");
 
-        var svgBlob = new Blob([svgData], { type: "image/svg+xml;charset=utf-8" });
-        var svgUrl = URL.createObjectURL(svgBlob);
-        var downloadLink = document.createElement("a");
-        downloadLink.href = svgUrl;
-        downloadLink.download = state.videoFileName + "-scored-behavior.svg";
-        document.body.appendChild(downloadLink);
-        downloadLink.click();
-        document.body.removeChild(downloadLink);
+            var svgBlob = new Blob([svgData], { type: "image/svg+xml;charset=utf-8" });
+            var svgUrl = URL.createObjectURL(svgBlob);
+            var downloadLink = document.createElement("a");
+            downloadLink.href = svgUrl;
+            downloadLink.download = state.dataFileName + "-scored-behavior.svg";
+            document.body.appendChild(downloadLink);
+            downloadLink.click();
+            document.body.removeChild(downloadLink);
+        }
     };
 
     const handleNavigateToGitHub = () => {
@@ -273,7 +307,7 @@ const App = () => {
     };
 
     const handleKeydown = (event) => {
-        if (state.videoFilePath !== '' && SPACE_KEYS.includes(String(event.key))) {
+        if (state.videoFilePath !== '' && state.isVideo && SPACE_KEYS.includes(String(event.key))) {
             console.log("space " + event.key, state);
             event.preventDefault();
             handleIsPlayingUpdate();
@@ -312,6 +346,7 @@ const App = () => {
             let activity = {
                 key: keybind.key,
                 behavior: keybind.behavior,
+                order: keybind.order,
                 start: state.playedSeconds
             };
 
@@ -358,7 +393,8 @@ const App = () => {
     useEventListener('keyup', handleKeyup);
 
     const classes = useStyles();
-    const hiddenInput = useRef(null);
+    const hiddenVideoUpload = useRef(null);
+    const hiddenDataUpload = useRef(null);
 
     const [anchorKeybinds, setAnchorKeybinds] = useState(null);
     const [anchorSettings, setAnchorSettings] = useState(null);
@@ -382,7 +418,8 @@ const App = () => {
 
     return (
         <div className="App">
-            <input type="file" ref={hiddenInput} onChange={handleVideoUpload} style={{ display: 'none' }} />
+            <input type="file" ref={hiddenVideoUpload} onChange={handleVideoUpload} style={{ display: 'none' }} />
+            <input type="file" ref={hiddenDataUpload} onChange={handleDataUpload} style={{ display: 'none' }} />
             <StyledMenu
                 className={classes.popoverMenu}
                 anchorEl={anchorSettings}
@@ -438,37 +475,63 @@ const App = () => {
             <AppBar position="fixed" style={{ background: '#469FAE' }}>
                 <Toolbar className={classes.toolbar}>
                     <Typography variant="h5" component="h1" className={classes.title}>Video Keypress</Typography>
-                    <Grid container alignItems="center" className={classes.currentVideoMenu}>
-                        <Grid item>
-                            <Typography variant="caption" display="block">Current Video:</Typography>
-                            <Typography variant="overline" className={classes.restrictedText}>VideoName nd on.mp4</Typography>
-                        </Grid>
+                    <Grid container alignItems="center" className={classes.menu}>
+                        {state.dataFileName && (
+                            <Tooltip title={state.dataFileName}>
+                                <Grid item>
+                                    <Typography variant="caption" display="block" className={classes.restrictedText}>Current {state.isVideo ? "Video" : "Data"}:</Typography>
+                                    <Typography variant="overline" display="block" className={classes.restrictedText}>{state.dataFileName}</Typography>
+                                </Grid>
+                            </Tooltip>
 
-
-                        <Tooltip title="Download Data">
-                            <IconButton aria-label="download data"
-                                color="inherit"
-                                className={classes.button}
-                                onClick={handleDownloadData}>
-                                <GetAppIcon />
-                            </IconButton>
-                        </Tooltip>
-
-                        <Tooltip title="Download SVG">
-                            <IconButton aria-label="download svg"
-                                color="inherit"
-                                className={classes.button}
-                                onClick={handleDownloadSVG}>
-                                <ImageIcon />
-                            </IconButton>
-                        </Tooltip>
-                    </Grid>
-                    <Grid container alignItems="center" className={classes.globalMenu}>
+                        )}
+                        {state.dataFileName && (
+                            <Divider orientation="vertical" flexItem />
+                        )}
+                        {state.dataFileName && (
+                            <Tooltip title="Download Data">
+                                <IconButton aria-label="download data"
+                                    color="inherit"
+                                    className={classes.button}
+                                    onClick={handleDownloadData}>
+                                    <GetAppIcon />
+                                </IconButton>
+                            </Tooltip>
+                        )}
+                        {state.dataFileName && (
+                            <Divider orientation="vertical" flexItem />
+                        )}
+                        {state.dataFileName && (
+                            <Tooltip title="Download SVG">
+                                <IconButton aria-label="download svg"
+                                    color="inherit"
+                                    className={classes.button}
+                                    onClick={handleDownloadSVG}>
+                                    <ImageIcon />
+                                </IconButton>
+                            </Tooltip>
+                        )}
+                        {state.dataFileName && (
+                            <Divider orientation="vertical" flexItem />
+                        )}
+                        {state.dataFileName && (
+                            <Tooltip title="Unset Video">
+                                <IconButton aria-label="unset video"
+                                    color="inherit"
+                                    className={classes.button}
+                                    onClick={resetVideo}>
+                                    <CancelIcon />
+                                </IconButton>
+                            </Tooltip>
+                        )}
+                        {state.dataFileName && (
+                            <Divider orientation="vertical" flexItem />
+                        )}
                         <Tooltip title="Upload Data">
                             <IconButton aria-label="upload data"
                                 color="inherit"
                                 className={classes.button}
-                                onClick={handleUploadData}>
+                                onClick={handleDataSelect}>
                                 <PublishIcon />
                             </IconButton>
                         </Tooltip>
@@ -508,43 +571,38 @@ const App = () => {
                 </Toolbar>
             </AppBar>
             <div className={classes.content}>
-                {state.videoFilePath ?
-                    <Typography variant="button" display="block" align="center" gutterBottom>
-                        Current Video: {state.videoFileName}
-                        <Tooltip title="Unset Video">
-                            <IconButton aria-label="unset video" color="inherit" className={classes.smallButton} onClick={resetVideo}>
-                                <CancelIcon />
-                            </IconButton>
-                        </Tooltip>
-                    </Typography>
-                    : ""}
-                {!state.videoFilePath ?
+                {!state.dataFileName && (
                     <div>
-                        <Typography variant="button" display="block" align="center" gutterBottom>
-                            No video selected
-                    </Typography>
+                        <Typography variant="button" display="block" align="center" gutterBottom>No video selected</Typography>
                         <Tooltip title="Select Video">
                             <IconButton aria-label="select video" color="inherit" className={classes.largeButton} onClick={(e) => handleVideoSelect(e)}>
                                 <MovieIcon />
                             </IconButton>
                         </Tooltip>
                     </div>
-                    : ""}
+                )}
+
                 <div className="Row">
                     <div className="VideoPlay">
-                        <ReactPlayer url={state.videoFilePath}
-                            className={classes.reactPlayer}
-                            playing={isPlayingBuffer}
-                            width="840px"
-                            height="100%"
-                            controls={true}
-                            onDuration={handleDuration}
-                            onProgress={handleProgress}
-                            playbackRate={state.playbackRate || 1}
-                            onPause={handleOnPauseStop}
-                            onStart={handleOnStartPlay}
-                            onPlay={handleOnStartPlay}
-                        />
+                        {state.dataFileName && !state.isVideo && (
+                            <div className={classes.dataText}><pre>{JSON.stringify(state.data, undefined, 2)}</pre></div>
+
+                        )}
+                        {state.dataFileName && state.isVideo && (
+                            <ReactPlayer url={state.videoFilePath}
+                                className={classes.reactPlayer}
+                                playing={isPlayingBuffer}
+                                width="840px"
+                                height="100%"
+                                controls={true}
+                                onDuration={handleDuration}
+                                onProgress={handleProgress}
+                                playbackRate={state.playbackRate || 1}
+                                onPause={handleOnPauseStop}
+                                onStart={handleOnStartPlay}
+                                onPlay={handleOnStartPlay}
+                            />
+                        )}
                         <div className="Row">
                             <Chart state={state} />
                         </div>

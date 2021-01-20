@@ -40,6 +40,7 @@ const useStyles = makeStyles((theme) => ({
 const Chart = (props) => {
     const [formattedData, setFormattedData] = useState([]);
     const [derivedFields, setDerivedFields] = useState([]);
+    const [cachedNumHeaderRows, setCachedNumHeaderRows] = useState(0);
     const [cachedFormattedDataSize, setCachedFormattedDataSize] = useState(0);
 
     const classes = useStyles();
@@ -54,7 +55,7 @@ const Chart = (props) => {
         return () => clearInterval(interval);
     });
 
-    function computeDerivedFields() {
+    const computeDerivedFields = () => {
         // Remove header row of formatted data
         var data = formattedData.filter(obj => typeof obj[0] === 'string' && obj[1] !== 'Meta');
         console.log(formattedData);
@@ -75,6 +76,7 @@ const Chart = (props) => {
             var occurences = 0, totalDuration = 0;
             var matchingEvents = data.filter(event => event[0] === behavior);
             var order = keybindMap.filter(keybind => keybind.behavior === behavior).order;
+
             console.log("finding derived fields for " + behavior + " found " + matchingEvents.length + " events");
 
             occurences = matchingEvents.length;
@@ -98,7 +100,17 @@ const Chart = (props) => {
         });
 
         // Sort derived fields by order property
-        tempDerivedFields.sort((a, b) => (a.order > b.order) ? 1 : -1);
+        tempDerivedFields.sort((a, b) => {
+            if (a.order !== undefined && b.order !== undefined) {
+                return (a.order > b.order) ? 1 : -1;
+            } else {
+                var textA = a.behavior.toUpperCase();
+                var textB = b.behavior.toUpperCase();
+                return (textA < textB) ? -1 : (textA > textB) ? 1 : 0;
+            }
+        });
+
+
 
         setDerivedFields((derivedFields) => {
             derivedFields = tempDerivedFields;
@@ -109,17 +121,51 @@ const Chart = (props) => {
         props.state.derivedFields = derivedFields;
     };
 
+    const formatEvent = (latestEvent) => {
+        // for display purposes, set a minimum value for durations
+        if ((latestEvent.end - latestEvent.start) < MIN_EVENT_DURATION) latestEvent.end += MIN_EVENT_DURATION;
+
+        // Seach existing records for similar start, end, duration times and adjust by the MIN_EVENT_DURATION
+        // This is to account for key presses that happen faster than the update cycle of React
+        props.state.data.events.forEach(obj => {
+            if (obj.id !== latestEvent.id) {
+                if (obj.start === latestEvent.start) {
+                    console.warn("Adjusted event start time due to existing similar events: " + latestEvent.id);
+                    latestEvent.start += (MIN_EVENT_DURATION + (0.1 * MIN_EVENT_DURATION));
+                }
+
+                if (obj.behavior === latestEvent.behavior && obj.end === latestEvent.start) {
+                    console.warn("Adjusted event start time due to existing similar events: " + latestEvent.id);
+                    latestEvent.start += (0.1 * MIN_EVENT_DURATION);
+                }
+
+                if (obj.end === latestEvent.end) {
+                    console.warn("Adjusted event end time due to existing similar events: " + latestEvent.id);
+                    latestEvent.end += (MIN_EVENT_DURATION + (0.1 * MIN_EVENT_DURATION));
+                }
+            }
+        });
+
+        return [
+            latestEvent.behavior,
+            "Event: #" + latestEvent.id,
+            convertToMilliseconds(latestEvent.start),
+            convertToMilliseconds(latestEvent.end)
+        ];
+    };
+
     useEffect(() => {
-        var isVideoLoaded = (props.state.videoFilePath !== '');
-        var areEventsEmpty = (formattedData.length === 0 && props.state.data.events && props.state.data.events.length === 0);
+        var isDataLoaded = (props.state.dataFileName !== '');
+        var isFormattedDataEmpty = (formattedData.length === 0);
+        var areEventsEmpty = (props.state.data.events && props.state.data.events.length === 0);
 
         // Video has been cleared, reset the chart
-        if (!isVideoLoaded && formattedData.length !== 0) {
+        if (!isDataLoaded && formattedData.length !== 0) {
             setFormattedData([]);
             setDerivedFields([]);
         }
 
-        if (isVideoLoaded && areEventsEmpty) {
+        if (isDataLoaded && isFormattedDataEmpty) {
             var headerRows = [
                 [
                     { type: 'string', id: 'Behavior' },
@@ -132,54 +178,54 @@ const Chart = (props) => {
                 ]
             ];
 
-            // Adding empty Behavior records to force a consistent order
-            props.state.keybinds.forEach(obj => {
-                headerRows.push([obj.behavior, "Meta", 0, 0]);
-            });
+            if (props.state.isVideo && areEventsEmpty) {
+                // Adding empty Behavior records to force a consistent order
+                props.state.keybinds.forEach(obj => {
+                    headerRows.push([obj.behavior, "Meta", 0, 0]);
+                });
+            } else if (!areEventsEmpty) {
+                // Likely coming from a data upload - find unique behaviors and sort them alphabetically if order property does not exist
+                // Find unqiue behaviors in existing data
+                const uniqueBehaviors = [];
+                props.state.data.events.forEach(event => {
+                    if (uniqueBehaviors.indexOf(event.behavior) === -1) {
+                        uniqueBehaviors.push(event.behavior)
+                    }
+                });
+                console.log(JSON.stringify(uniqueBehaviors));
+                uniqueBehaviors.sort((a, b) => {
+                    var textA = a.toUpperCase();
+                    var textB = b.toUpperCase();
+                    return (textA < textB) ? -1 : (textA > textB) ? 1 : 0;
+                });
+                uniqueBehaviors.forEach(behavior => {
+                    headerRows.push([behavior, "Meta", 0, 0]);
+                });
+            }
+
+            setCachedNumHeaderRows(headerRows.length)
             setFormattedData(headerRows);
         }
 
         // Check if events exist to avoid running code when idle
         var eventsExist = (props.state.data.events && props.state.data.events.length > 0);
         // Check if a new event exists -- length of data.events plus 2 base header rows
-        var newEventExists = (props.state.data.events.length + (2 + props.state.keybinds.length) > formattedData.length);
+        var newEventExists = (props.state.data.events.length + cachedNumHeaderRows > formattedData.length);
 
         // Add new event and compute derived fields when new record is persisted
         if (eventsExist && newEventExists) {
-            // Get latest row
-            var latestEvent = props.state.data.events[props.state.data.events.length - 1];
+            var eventsDiff = (props.state.data.events.length - formattedData.length);
 
-            // for display purposes, set a minimum value for durations
-            if ((latestEvent.end - latestEvent.start) < MIN_EVENT_DURATION) latestEvent.end += MIN_EVENT_DURATION;
+            var formattedEvents = [];
+            while (eventsDiff > 0) {
+                // Get earliest unformatted row
+                var unformattedEvent = props.state.data.events[props.state.data.events.length - eventsDiff];
+                var formattedEvent = formatEvent(unformattedEvent);
+                formattedEvents.push(formattedEvent);
+                eventsDiff--;
+            }
 
-            // Seach existing records for similar start, end, duration times and adjust by the MIN_EVENT_DURATION
-            // This is to account for key presses that happen faster than the update cycle of React
-            props.state.data.events.forEach(obj => {
-                if (obj.id !== latestEvent.id) {
-                    if (obj.start === latestEvent.start) {
-                        console.warn("Adjusted event start time due to existing similar events: " + latestEvent.id);
-                        latestEvent.start += (MIN_EVENT_DURATION + (0.1 * MIN_EVENT_DURATION));
-                    }
-
-                    if (obj.behavior === latestEvent.behavior && obj.end === latestEvent.start) {
-                        console.warn("Adjusted event start time due to existing similar events: " + latestEvent.id);
-                        latestEvent.start += (0.1 * MIN_EVENT_DURATION);
-                    }
-
-                    if (obj.end === latestEvent.end) {
-                        console.warn("Adjusted event end time due to existing similar events: " + latestEvent.id);
-                        latestEvent.end += (MIN_EVENT_DURATION + (0.1 * MIN_EVENT_DURATION));
-                    }
-                }
-            });
-
-            var formattedEvent = [
-                latestEvent.behavior,
-                "Event: #" + latestEvent.id,
-                convertToMilliseconds(latestEvent.start),
-                convertToMilliseconds(latestEvent.end)
-            ];
-            setFormattedData(formattedData => [...formattedData, formattedEvent]);
+            setFormattedData(formattedData => formattedData.concat(formattedEvents));
         }
     });
 
