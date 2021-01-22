@@ -212,21 +212,14 @@ const Chart = (props) => {
 
         // Add new event and compute derived fields when new record is persisted
         if (eventsExist && newEventExists) {
-            var eventsDiff = (props.state.data.events.length - formattedData.length);
-
+            var eventsDiff = ((props.state.data.events.length + cachedNumHeaderRows) - formattedData.length);
             var formattedEvents = [], unformattedEvent, formattedEvent;
-            // The while loop does creates infinite setState loops while recording video behavior.
-            if (eventsDiff > 1) {
-                while (eventsDiff > 0) {
-                    unformattedEvent = props.state.data.events[props.state.data.events.length - eventsDiff];
-                    formattedEvent = formatEvent(unformattedEvent);
-                    formattedEvents.push(formattedEvent);
-                    eventsDiff--;
-                }
-            } else {
-                unformattedEvent = props.state.data.events[props.state.data.events.length - 1];
+
+            while (eventsDiff > 0) {
+                unformattedEvent = props.state.data.events[props.state.data.events.length - eventsDiff];
                 formattedEvent = formatEvent(unformattedEvent);
                 formattedEvents.push(formattedEvent);
+                eventsDiff--;
             }
 
             setFormattedData(formattedData => (formattedData.concat(formattedEvents)));
