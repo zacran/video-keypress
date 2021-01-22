@@ -1,4 +1,4 @@
-import React, { useState, useEffect, useRef } from "react";
+import React, { useState, useRef } from "react";
 import "./App.css";
 import 'fontsource-roboto';
 import packageJson from '../package.json';
@@ -16,7 +16,7 @@ import ReactPlayer from "react-player";
 import useEventListener from "@use-it/event-listener";
 import KeybindMap from "./hooks/keybindMap"
 import ImageIcon from '@material-ui/icons/Image';
-import PublishIcon from '@material-ui/icons/Publish';
+import CodeIcon from '@material-ui/icons/Code';
 import FolderIcon from '@material-ui/icons/Folder';
 import DeleteIcon from '@material-ui/icons/Delete';
 import GitHubIcon from '@material-ui/icons/GitHub';
@@ -67,7 +67,7 @@ const useStyles = makeStyles((theme) => ({
         }
     },
     largeButton: {
-        display: 'block',
+        display: 'inline-block',
         margin: 'auto',
         '& svg': {
             fontSize: 144,
@@ -252,11 +252,9 @@ const App = () => {
             // Validate data
             var obj = JSON.parse(event.target.result);
             if (obj.events && Array.isArray(obj.events) && obj.metadata && obj.metadata.fileName) {
-                console.log("Uploaded data passed validation");
-                console.log("fileName", fileName);
                 setState({ ...state, dataFileName: fileName, data: obj });
             } else {
-                console.warn("Uploaded data not valid.")
+                console.warn("Selected data not valid.")
             }
         };
     };
@@ -294,6 +292,11 @@ const App = () => {
         window.open('https://github.com/zacran/video-keypress', '_blank');
     };
 
+    // isPlayingBuffer will never allow starting a video with Space.
+    // This is by design because of autoPlay restrictions in Chrome.
+    // When video is started via Javascript, Chrome assumes it is 
+    // autoplaying; user events such as adjusting the volume or fullsize controls can throw
+    // the state variables out of sync as Chrome fires start/stop commands.
     const handleIsPlayingUpdate = () => {
         isPlayingBuffer = !isPlayingBuffer;
     };
@@ -301,17 +304,15 @@ const App = () => {
     const handleOnStartPlay = () => {
         setState({ ...state, isPlaying: true });
     };
-
     const handleOnPauseStop = () => {
         setState({ ...state, isPlaying: false });
     };
 
     const handleKeydown = (event) => {
         if (state.videoFilePath !== '' && state.isVideo && SPACE_KEYS.includes(String(event.key))) {
-            console.log("space " + event.key, state);
             event.preventDefault();
             handleIsPlayingUpdate();
-        } else if (state.isPlaying) {
+        } else if (state.isVideo && state.isPlaying) {
             handleKeyevent(event.key, recordKeydown);
         }
     };
@@ -321,7 +322,7 @@ const App = () => {
     };
 
     const handleKeyevent = (key, callback) => {
-        console.log("press " + key, state);
+        // console.log("press " + key, state);
         state.keybinds.forEach(function (keybind) {
             if ((keybind.key === (String(key)) || keybind.code === (String(key)))) {
                 callback(keybind);
@@ -341,20 +342,18 @@ const App = () => {
     const recordKeydown = (keybind) => {
         if (!keybind.active) {
             keybind.active = true;
-            console.log("key down: " + keybind.key + " at " + state.playedSeconds + " secs");
+            // console.log("key down: " + keybind.key + " at " + state.playedSeconds + " secs");
 
             let activity = {
                 key: keybind.key,
                 behavior: keybind.behavior,
                 order: keybind.order,
-                start: state.playedSeconds
+                start: parseFloat(state.playedSeconds.toFixed(3))
             };
 
             let activeRecords = state.activeRecords;
             activeRecords.push(activity);
             setState({ ...state, activeRecords: activeRecords });
-            console.log("recorded activity start: ", activity);
-            console.log(state.activeRecords);
         }
     };
 
@@ -364,13 +363,10 @@ const App = () => {
 
         if (activity) {
             keybind.active = false;
-            console.log("key up: " + keybind.key + " at " + state.playedSeconds + " secs");
+            // console.log("key up: " + keybind.key + " at " + state.playedSeconds + " secs");
 
             activity.id = state.data.events.length;
-            activity.end = state.playedSeconds;
-
-            console.log("recorded activity end: ", activity);
-            console.log(state.activeRecords);
+            activity.end = parseFloat(state.playedSeconds.toFixed(3));
 
             let dataEvents = state.data.events;
             dataEvents.push(activity);
@@ -385,7 +381,6 @@ const App = () => {
                     }
                 }
             });
-            console.log(state.data);
         }
     };
 
@@ -437,7 +432,7 @@ const App = () => {
                     step={0.25}
                     marks
                     min={0.25}
-                    max={2}
+                    max={3}
                     valueLabelDisplay="auto"
                     onChange={handlePlaybackRateChange}
                 />
@@ -527,18 +522,22 @@ const App = () => {
                         {state.dataFileName && (
                             <Divider orientation="vertical" flexItem />
                         )}
-                        <Tooltip title="Upload Data">
-                            <IconButton aria-label="upload data"
+
+                        <Tooltip title="Select Video">
+                            <IconButton aria-label="select video"
                                 color="inherit"
                                 className={classes.button}
-                                onClick={handleDataSelect}>
-                                <PublishIcon />
+                                onClick={(e) => handleVideoSelect(e)}>
+                                <MovieIcon />
                             </IconButton>
                         </Tooltip>
                         <Divider orientation="vertical" flexItem />
-                        <Tooltip title="Select Video">
-                            <IconButton aria-label="select video" color="inherit" className={classes.button} onClick={(e) => handleVideoSelect(e)}>
-                                <MovieIcon />
+                        <Tooltip title="Select Data">
+                            <IconButton aria-label="select data"
+                                color="inherit"
+                                className={classes.button}
+                                onClick={handleDataSelect}>
+                                <CodeIcon />
                             </IconButton>
                         </Tooltip>
                         <Divider orientation="vertical" flexItem />
@@ -572,11 +571,22 @@ const App = () => {
             </AppBar>
             <div className={classes.content}>
                 {!state.dataFileName && (
-                    <div>
-                        <Typography variant="button" display="block" align="center" gutterBottom>No video selected</Typography>
-                        <Tooltip title="Select Video">
-                            <IconButton aria-label="select video" color="inherit" className={classes.largeButton} onClick={(e) => handleVideoSelect(e)}>
+                    <div align="center">
+                        <Typography variant="caption" display="block" align="center" gutterBottom>Please select a video or select data from a previous session!</Typography>
+                        <Tooltip title="Select Video" align="center">
+                            <IconButton aria-label="select video"
+                                color="inherit"
+                                className={classes.largeButton}
+                                onClick={(e) => handleVideoSelect(e)}>
                                 <MovieIcon />
+                            </IconButton>
+                        </Tooltip>
+                        <Tooltip title="Select Data" align="center">
+                            <IconButton aria-label="select video"
+                                color="inherit"
+                                className={classes.largeButton}
+                                onClick={(e) => handleDataSelect(e)}>
+                                <CodeIcon />
                             </IconButton>
                         </Tooltip>
                     </div>
@@ -586,7 +596,6 @@ const App = () => {
                     <div className="VideoPlay">
                         {state.dataFileName && !state.isVideo && (
                             <div className={classes.dataText}><pre>{JSON.stringify(state.data, undefined, 2)}</pre></div>
-
                         )}
                         {state.dataFileName && state.isVideo && (
                             <ReactPlayer url={state.videoFilePath}
@@ -594,6 +603,8 @@ const App = () => {
                                 playing={isPlayingBuffer}
                                 width="840px"
                                 height="100%"
+                                autoPlay={false}
+                                muted={true}
                                 controls={true}
                                 onDuration={handleDuration}
                                 onProgress={handleProgress}
