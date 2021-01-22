@@ -110,8 +110,6 @@ const Chart = (props) => {
             }
         });
 
-
-
         setDerivedFields((derivedFields) => {
             derivedFields = tempDerivedFields;
             console.log(derivedFields);
@@ -128,7 +126,7 @@ const Chart = (props) => {
         // Seach existing records for similar start, end, duration times and adjust by the MIN_EVENT_DURATION
         // This is to account for key presses that happen faster than the update cycle of React
         props.state.data.events.forEach(obj => {
-            if (obj.id !== latestEvent.id) {
+            if (obj.id !== latestEvent.id && obj.behavior !== 'Meta') {
                 if (obj.start === latestEvent.start) {
                     console.warn("Adjusted event start time due to existing similar events: " + latestEvent.id);
                     latestEvent.start += (MIN_EVENT_DURATION + (0.1 * MIN_EVENT_DURATION));
@@ -209,29 +207,35 @@ const Chart = (props) => {
 
         // Check if events exist to avoid running code when idle
         var eventsExist = (props.state.data.events && props.state.data.events.length > 0);
-        // Check if a new event exists -- length of data.events plus 2 base header rows
-        var newEventExists = (props.state.data.events.length + cachedNumHeaderRows > formattedData.length);
+        // Check if a new event exists -- length of data.events plus header rows
+        var newEventExists = ((props.state.data.events.length + cachedNumHeaderRows) > formattedData.length);
 
         // Add new event and compute derived fields when new record is persisted
         if (eventsExist && newEventExists) {
             var eventsDiff = (props.state.data.events.length - formattedData.length);
 
-            var formattedEvents = [];
-            while (eventsDiff > 0) {
-                // Get earliest unformatted row
-                var unformattedEvent = props.state.data.events[props.state.data.events.length - eventsDiff];
-                var formattedEvent = formatEvent(unformattedEvent);
+            var formattedEvents = [], unformattedEvent, formattedEvent;
+            // The while loop does creates infinite setState loops while recording video behavior.
+            if (eventsDiff > 1) {
+                while (eventsDiff > 0) {
+                    unformattedEvent = props.state.data.events[props.state.data.events.length - eventsDiff];
+                    formattedEvent = formatEvent(unformattedEvent);
+                    formattedEvents.push(formattedEvent);
+                    eventsDiff--;
+                }
+            } else {
+                unformattedEvent = props.state.data.events[props.state.data.events.length - 1];
+                formattedEvent = formatEvent(unformattedEvent);
                 formattedEvents.push(formattedEvent);
-                eventsDiff--;
             }
 
-            setFormattedData(formattedData => formattedData.concat(formattedEvents));
+            setFormattedData(formattedData => (formattedData.concat(formattedEvents)));
         }
     });
 
     return (
         <div className="Row">
-            {derivedFields.length > 0 ?
+            {derivedFields.length > 0 && (
                 derivedFields.map((derivedField) =>
                     <Grid container className={classes.root} spacing={2} key={derivedField.behavior}>
                         <Grid item xs={3}>
@@ -260,27 +264,25 @@ const Chart = (props) => {
                         </Grid>
                     </Grid>
                 )
-                : ""}
+            )}
             <div id="chart-container" className="GoogleChart">
-                {
-                    formattedData.length > 1 ?
-                        <GoogleChart
-                            width={'840px'}
-                            height={'400px'}
-                            chartType="Timeline"
-                            data={formattedData}
-                            options={{
-                                timeline: {
-                                    colorByRowLabel: true,
-                                    margin: 'auto',
-                                    showBarLabels: false,
-                                },
-                                colors: ['transparent', '#469FAE', '#3ECDB6', '#C09BD8', '#F67E5C', '#CA1252', '#DD5B5C', '#D9959A', '#938D99', '#5E614A'],
-                            }}
-                            rootProps={{ 'data-testid': '6' }}
-                        />
-                        : ""
-                }
+                {formattedData.length > 1 && (
+                    <GoogleChart
+                        width={'840px'}
+                        height={'400px'}
+                        chartType="Timeline"
+                        data={formattedData}
+                        options={{
+                            timeline: {
+                                colorByRowLabel: true,
+                                margin: 'auto',
+                                showBarLabels: false,
+                            },
+                            colors: ['transparent', '#469FAE', '#3ECDB6', '#C09BD8', '#F67E5C', '#CA1252', '#DD5B5C', '#D9959A', '#938D99', '#5E614A'],
+                        }}
+                        rootProps={{ 'data-testid': '6' }}
+                    />
+                )}
             </div>
         </div>
     );
