@@ -7,8 +7,8 @@ import KeybindMap from "../hooks/keybindMap"
 import { makeStyles } from '@material-ui/core/styles';
 import "../App.css";
 
-const COMPUTE_DERIVED_FIELDS_INTERVAL = 500;
-const MIN_EVENT_DURATION = 0.1;
+const COMPUTE_DERIVED_FIELDS_INTERVAL = 1000;
+const MIN_EVENT_DURATION = 0.01; // In seconds
 
 function convertToMilliseconds(value) {
     return value * 1000
@@ -126,7 +126,7 @@ const Chart = (props) => {
         // Seach existing records for similar start, end, duration times and adjust by the MIN_EVENT_DURATION
         // This is to account for key presses that happen faster than the update cycle of React
         props.state.data.events.forEach(obj => {
-            if (obj.id !== latestEvent.id && obj.behavior !== 'Meta') {
+            if (obj.id !== latestEvent.id && obj.behavior === latestEvent.behavior) {
                 if (obj.start === latestEvent.start) {
                     console.warn("Adjusted event start time due to existing similar events: " + latestEvent.id);
                     latestEvent.start += (MIN_EVENT_DURATION + (0.1 * MIN_EVENT_DURATION));
