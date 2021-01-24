@@ -5,8 +5,6 @@ import packageJson from '../package.json';
 import { withStyles } from '@material-ui/core/styles';
 import Menu from '@material-ui/core/Menu';
 import MenuItem from '@material-ui/core/MenuItem';
-import ListItemIcon from '@material-ui/core/ListItemIcon';
-import ListItemText from '@material-ui/core/ListItemText';
 import AddCircleIcon from '@material-ui/icons/AddCircle';
 import AppBar from '@material-ui/core/AppBar';
 import Toolbar from '@material-ui/core/Toolbar';
@@ -18,7 +16,14 @@ import KeybindMap from "./hooks/keybindMap"
 import ImageIcon from '@material-ui/icons/Image';
 import CodeIcon from '@material-ui/icons/Code';
 import FolderIcon from '@material-ui/icons/Folder';
+import EditIcon from '@material-ui/icons/Edit';
 import DeleteIcon from '@material-ui/icons/Delete';
+import BlockIcon from '@material-ui/icons/Block';
+import List from '@material-ui/core/List';
+import ListSubheader from '@material-ui/core/ListSubheader';
+import ListItem from '@material-ui/core/ListItem';
+import ListItemIcon from '@material-ui/core/ListItemIcon';
+import ListItemText from '@material-ui/core/ListItemText';
 import GitHubIcon from '@material-ui/icons/GitHub';
 import MovieIcon from '@material-ui/icons/Movie';
 import GetAppIcon from '@material-ui/icons/GetApp';
@@ -28,8 +33,11 @@ import IconButton from '@material-ui/core/IconButton';
 import Tooltip from '@material-ui/core/Tooltip';
 import Typography from '@material-ui/core/Typography';
 import Grid from '@material-ui/core/Grid';
+import ButtonGroup from '@material-ui/core/ButtonGroup';
 import Divider from '@material-ui/core/Divider';
-import Slider from '@material-ui/core/Slider';
+import ToggleButton from '@material-ui/lab/ToggleButton';
+import ToggleButtonGroup from '@material-ui/lab/ToggleButtonGroup';
+import Button from '@material-ui/core/Button';
 import { makeStyles } from '@material-ui/core/styles';
 
 const SPACE_KEYS = ['32', ' '];
@@ -40,9 +48,6 @@ const useStyles = makeStyles((theme) => ({
     },
     reactPlayer: {
         margin: 'auto'
-    },
-    popoverMenu: {
-        width: '200px'
     },
     slider: {
         margin: '0px 20px',
@@ -60,10 +65,8 @@ const useStyles = makeStyles((theme) => ({
         padding: 0,
     },
     smallButton: {
-        marginTop: -4,
-        padding: 4,
         '& svg': {
-            fontSize: 18
+            color: "#469FAE"
         }
     },
     largeButton: {
@@ -133,17 +136,6 @@ const StyledMenu = withStyles({
         {...props}
     />
 ));
-
-const StyledMenuItem = withStyles((theme) => ({
-    root: {
-        '&:focus': {
-            backgroundColor: theme.palette.primary.main,
-            '& .MuiListItemIcon-root, & .MuiListItemText-primary': {
-                color: theme.palette.common.white,
-            },
-        },
-    },
-}))(MenuItem);
 
 const App = () => {
     var isPlayingBuffer = false;
@@ -421,52 +413,68 @@ const App = () => {
                 keepMounted
                 open={Boolean(anchorSettings)}
                 onClose={handleSettingsClose}>
+                <ListItemText primary="Settings" align="center" />
+                <ListItemText secondary="Playback Speed" align="center" />
+                <Grid align="center">
+                    <ToggleButtonGroup
+                        dense
+                        size="small"
+                        value={state.playbackRate || 1}
+                        align="center"
+                        exclusive
+                        onChange={handlePlaybackRateChange}
+                        aria-label="playback-rate-togglegroup"
+                    >
+                        <ToggleButton value={0.5} aria-label="centered">
+                            <Typography variant="caption" align="center">0.5x</Typography>
+                        </ToggleButton>
+                        <ToggleButton value={1.0} aria-label="centered">
+                            <Typography variant="caption" align="center">1.0x</Typography>
+                        </ToggleButton>
+                        <ToggleButton value={1.5} aria-label="centered">
+                            <Typography variant="caption" align="center">1.5x</Typography>
+                        </ToggleButton>
+                        <ToggleButton value={2.0} aria-label="centered">
+                            <Typography variant="caption" align="center">2.0x</Typography>
+                        </ToggleButton>
+                    </ToggleButtonGroup>
+                </Grid>
+                <ListItemText secondary="Keybinds" align="center" />
+                <List component="nav"
+                    aria-label="keybinds-list"
+                    className={classes.root}
+                    dense
+                >
+                    <ListItem dense>
+                        <ListItemText primary="Pause/Resume" secondary="keybind: space" />
+                    </ListItem>
+                    {state.keybinds.map((keybind) =>
+                        <ListItem key={keybind.key} dense>
+                            <ListItemText primary={keybind.behavior} secondary={`keybind: ${keybind.key}`} />
+                            <Tooltip title="Edit Keybind">
+                                <IconButton size="small" className={classes.smallButton}>
+                                    <EditIcon fontSize="small" />
+                                </IconButton>
+                            </Tooltip>
+                            <Tooltip title="Delete Keybind">
+                                <IconButton color="secondary" size="small">
+                                    <DeleteIcon fontSize="small" />
+                                </IconButton>
+                            </Tooltip>
+                        </ListItem>
+                    )}
+                    <Grid align="center">
+                        <Tooltip title="Add New Keybind">
+                            <IconButton color="primary" size="small" className={classes.smallButton}>
+                                <AddCircleIcon fontSize="small" />
+                            </IconButton>
+                        </Tooltip>
+                    </Grid>
 
-                <ListItemText id="playbackRate-slider" primary="Playback Speed" align="center" />
-                <Slider
-                    key={`playbackRate-slider`}
-                    className={classes.slider}
-                    value={state.playbackRate || 1}
-                    getAriaValueText={getPlaybackRate}
-                    aria-labelledby="playbackRate-slider"
-                    step={0.25}
-                    marks
-                    min={0.25}
-                    max={3}
-                    valueLabelDisplay="auto"
-                    onChange={handlePlaybackRateChange}
-                />
 
+                </List>
             </StyledMenu>
-            <StyledMenu
-                className={classes.popoverMenu}
-                anchorEl={anchorKeybinds}
-                keepMounted
-                open={Boolean(anchorKeybinds)}
-                onClose={handleKeybindMenuClose}>
-                <StyledMenuItem>
-                    {state.isPlaying === false && state.playedSeconds === 0 && (
-                        <ListItemText primary="Start" secondary="space" align="center" />
-                    )}
-                    {state.isPlaying === true && (
-                        <ListItemText primary="Pause" secondary="space" align="center" />
-                    )}
-                    {state.isPlaying === false && state.playedSeconds > 0 && (
-                        <ListItemText primary="Resume" secondary="space" align="center" />
-                    )}
-                </StyledMenuItem>
-                {state.keybinds.map((keybind) =>
-                    <StyledMenuItem key={keybind.key}>
-                        <ListItemText primary={keybind.behavior} secondary={keybind.key} align="center" />
-                    </StyledMenuItem>
-                )}
-                {/* <StyledMenuItem>
-                    <ListItemIcon>
-                        <AddCircleIcon fontSize="small" />
-                    </ListItemIcon>
-                    <ListItemText secondary="Add Keybind" align="center" />
-                </StyledMenuItem> */}
-            </StyledMenu>
+
             <AppBar position="fixed" style={{ background: '#469FAE' }}>
                 <Toolbar className={classes.toolbar}>
                     <Typography variant="h5" component="h1" className={classes.title}>Video Keypress</Typography>
@@ -540,22 +548,6 @@ const App = () => {
                                 <CodeIcon />
                             </IconButton>
                         </Tooltip>
-                        <Divider orientation="vertical" flexItem />
-                        <Tooltip title="Keybinds">
-                            <IconButton aria-label="keybinds"
-                                color="inherit"
-                                aria-haspopup="true"
-                                onClick={handleKeybindMenuClick}
-                                className={classes.button}>
-                                <KeyboardIcon />
-                            </IconButton>
-                        </Tooltip>
-                        {/* <Divider orientation="vertical" flexItem />
-                        <Tooltip title="Data">
-                            <IconButton aria-label="data" color="inherit" className={classes.button}>
-                                <FolderIcon />
-                            </IconButton>
-                        </Tooltip> */}
                         <Divider orientation="vertical" flexItem />
                         <Tooltip title="Settings">
                             <IconButton aria-label="settings"
@@ -639,9 +631,9 @@ const App = () => {
                                 </IconButton>
                             </Tooltip>
                         </Grid>
-                        <Grid item xs={1}>
+                        <Grid item xs={2}>
                             <Typography variant="caption" align="center" gutterBottom>
-                                v{packageJson.version}
+                                Version {packageJson.version}
                             </Typography>
                         </Grid>
                         <Grid item xs={3}>
