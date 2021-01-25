@@ -1,34 +1,50 @@
 import React, { useState, useEffect, useRef } from "react";
 import "./App.css";
 import 'fontsource-roboto';
+import packageJson from '../package.json';
 import { withStyles } from '@material-ui/core/styles';
 import Menu from '@material-ui/core/Menu';
 import MenuItem from '@material-ui/core/MenuItem';
-import ListItemIcon from '@material-ui/core/ListItemIcon';
-import ListItemText from '@material-ui/core/ListItemText';
 import AddCircleIcon from '@material-ui/icons/AddCircle';
 import AppBar from '@material-ui/core/AppBar';
 import Toolbar from '@material-ui/core/Toolbar';
-import Chart from "./components/Chart"
+import Chart from "./Chart"
 import CancelIcon from '@material-ui/icons/Cancel';
 import ReactPlayer from "react-player";
 import useEventListener from "@use-it/event-listener";
-import KeybindMap from "./hooks/keybindMap"
+import KeybindMap from "./keybindMap"
 import ImageIcon from '@material-ui/icons/Image';
+import CodeIcon from '@material-ui/icons/Code';
 import FolderIcon from '@material-ui/icons/Folder';
+import EditIcon from '@material-ui/icons/Edit';
 import DeleteIcon from '@material-ui/icons/Delete';
+import SettingsBackupRestoreIcon from '@material-ui/icons/SettingsBackupRestore';
+import BlockIcon from '@material-ui/icons/Block';
+import List from '@material-ui/core/List';
+import ListSubheader from '@material-ui/core/ListSubheader';
+import ListItem from '@material-ui/core/ListItem';
+import ListItemIcon from '@material-ui/core/ListItemIcon';
+import ListItemText from '@material-ui/core/ListItemText';
 import GitHubIcon from '@material-ui/icons/GitHub';
 import MovieIcon from '@material-ui/icons/Movie';
 import GetAppIcon from '@material-ui/icons/GetApp';
 import KeyboardIcon from '@material-ui/icons/Keyboard';
+import CheckCircleIcon from '@material-ui/icons/CheckCircle';
 import SettingsIcon from '@material-ui/icons/Settings';
 import IconButton from '@material-ui/core/IconButton';
 import Tooltip from '@material-ui/core/Tooltip';
 import Typography from '@material-ui/core/Typography';
 import Grid from '@material-ui/core/Grid';
 import Divider from '@material-ui/core/Divider';
-import Slider from '@material-ui/core/Slider';
+import ToggleButton from '@material-ui/lab/ToggleButton';
+import ToggleButtonGroup from '@material-ui/lab/ToggleButtonGroup';
+import Card from '@material-ui/core/Card';
+import CardActions from '@material-ui/core/CardActions';
+import CardContent from '@material-ui/core/CardContent';
+import TextField from '@material-ui/core/TextField';
+import Popover from '@material-ui/core/Popover';
 import { makeStyles } from '@material-ui/core/styles';
+import { ExitToApp } from "@material-ui/icons";
 
 const SPACE_KEYS = ['32', ' '];
 
@@ -39,25 +55,28 @@ const useStyles = makeStyles((theme) => ({
     reactPlayer: {
         margin: 'auto'
     },
-    popoverMenu: {
-        width: '200px'
-    },
     slider: {
         margin: '0px 20px',
         width: '80%'
+    },
+    dataText: {
+        height: '420px',
+        width: '840px',
+        overflow: 'scroll',
+        margin: 'auto',
+        border: `1px solid ${theme.palette.divider}`,
+        borderRadius: theme.shape.borderRadius,
     },
     button: {
         padding: 0,
     },
     smallButton: {
-        marginTop: -4,
-        padding: 4,
         '& svg': {
-            fontSize: 18
+            color: "#469FAE"
         }
     },
     largeButton: {
-        display: 'block',
+        display: 'inline-block',
         margin: 'auto',
         '& svg': {
             fontSize: 144,
@@ -67,6 +86,13 @@ const useStyles = makeStyles((theme) => ({
     toolbar: {
         minHeight: 48,
         maxHeight: 48,
+    },
+    restrictedText: {
+        overflow: 'hidden',
+        whiteSpace: 'nowrap',
+        textOverflow: 'ellipsis',
+        margin: '0px 10px',
+        maxWidth: '300px'
     },
     title: {
         flexGrow: 1,
@@ -117,21 +143,14 @@ const StyledMenu = withStyles({
     />
 ));
 
-const StyledMenuItem = withStyles((theme) => ({
-    root: {
-        '&:focus': {
-            backgroundColor: theme.palette.primary.main,
-            '& .MuiListItemIcon-root, & .MuiListItemText-primary': {
-                color: theme.palette.common.white,
-            },
-        },
-    },
-}))(MenuItem);
-
 const App = () => {
     var isPlayingBuffer = false;
+    const [keybindInEdit, setKeybindInEdit] = useState({});
+    const [loadedKeybinds, setLoadedKeybind] = useState([]);
+    const [anchorEditKeybinds, setAnchorEditKeybinds] = useState(null);
     const [state, setState] = useState({
-        videoFilePath: '',
+        dataFileName: '',
+        isVideo: false,
         isPlaying: false,
         duration: 0,
         playedSeconds: 0,
@@ -146,13 +165,29 @@ const App = () => {
         derivedFields: []
     });
 
+    useEffect(() => {
+        var savedKeybinds = JSON.parse(localStorage.getItem('keybinds')) || undefined;
+        if (savedKeybinds && Array.isArray(savedKeybinds)) {
+            setState({ ...state, keybinds: savedKeybinds });
+        }
+    }, []);
+
     const confirmVideoReset = () => {
         return window.confirm("Are you sure you wish to reset the existing video? Unsaved data will be lost.");
     };
 
     const resetData = () => {
-        hiddenInput.current.value = "";
-        setState({ ...state, videoFilePath: '', videoFileName: '', data: { metadata: {}, events: [] } });
+        hiddenVideoUpload.current.value = "";
+        setState({
+            ...state,
+            dataFileName: '',
+            isVideo: false,
+            isPlaying: false,
+            data: {
+                metadata: {},
+                events: []
+            }
+        });
     };
 
     function resetVideo() {
@@ -160,6 +195,98 @@ const App = () => {
             resetData();
         }
     };
+
+    const openEditKeybind = Boolean(anchorEditKeybinds);
+
+    const handleUpdateKeybinds = (keybinds) => {
+        localStorage.setItem('keybinds', JSON.stringify(keybinds));
+
+        var savedKeybinds = JSON.parse(localStorage.getItem('keybinds')) || undefined;
+        if (savedKeybinds && Array.isArray(savedKeybinds)) {
+            setState({ ...state, keybinds: savedKeybinds });
+        }
+    }
+
+    const handleEditKeybindChange = (prop) => (event) => {
+        var value = event.target.value;
+
+        if (value !== undefined) {
+            if (prop === 'order' && value !== '' && value !== NaN)
+                value = parseInt(value);
+
+            if (prop === 'key') {
+                var existingKey = state.keybinds.find(k => k.key == value);
+                if (existingKey) {
+                    // TODO - error notification
+                    return;
+                }
+
+
+            }
+
+            setKeybindInEdit({ ...keybindInEdit, [prop]: value });
+        }
+
+    };
+
+    const handleTriggerEditKeybind = (event, keybind) => {
+        setKeybindInEdit(keybind);
+        setAnchorEditKeybinds(event.currentTarget);
+    };
+
+    const handleAddNewKeybind = () => {
+        var keybinds = state.keybinds;
+        var id = Math.max.apply(Math, keybinds.map(function (k) { return k.id; })) || 0;
+        var newId = id++;
+        var order = Math.max.apply(Math, keybinds.map(function (k) { return k.order; })) || 0;
+        var newOrder = order++;
+
+        keybinds.push({
+            id: id, key: '0', order: order, behavior: "New Behavior", active: false
+        });
+
+        setState((state) => {
+            handleUpdateKeybinds(keybinds);
+
+            return { ...state, keybind: keybinds };
+        });
+    };
+
+    const handleAcceptEditKeybind = (event) => {
+        var keybinds = state.keybinds;
+        var index = keybinds.findIndex(k => k.id == keybindInEdit.id);
+        keybinds[index] = keybindInEdit;
+
+
+        setState((state) => {
+            handleUpdateKeybinds(keybinds);
+
+            return { ...state, keybind: keybinds };
+        });
+        handleCancelEditKeybind();
+    };
+
+    const handleCancelEditKeybind = () => {
+        setAnchorEditKeybinds(null);
+    };
+
+    const handleDeleteKeybind = (event, keybind) => {
+        if (window.confirm("Are you sure you wish to delete this keybind?")) {
+            var keybinds = state.keybinds.filter(k => k.id !== keybind.id);
+            setState((state) => {
+                handleUpdateKeybinds(keybinds);
+
+                return { ...state, keybind: keybinds };
+            });
+        }
+    }
+
+    const handleResetSettings = () => {
+        if (window.confirm("Are you sure you wish to clear local settings?")) {
+            localStorage.clear();
+            setState({ ...state, keybinds: KeybindMap.Keybinds });
+        }
+    }
 
     const handleDuration = (duration) => {
         setState({ ...state, duration: duration });
@@ -170,13 +297,13 @@ const App = () => {
     };
 
     const handleVideoSelect = (event) => {
-        if (state.videoFilePath !== '') {
+        if (state.dataFileName !== '') {
             if (!confirmVideoReset()) {
                 return;
             }
         }
         resetData();
-        hiddenInput.current.click();
+        hiddenVideoUpload.current.click();
     };
 
     const handleVideoUpload = (event) => {
@@ -190,7 +317,8 @@ const App = () => {
                 setState({
                     ...state,
                     videoFilePath: videoFilePath,
-                    videoFileName: event.target.files[0].name,
+                    dataFileName: event.target.files[0].name,
+                    isVideo: true,
                     data: {
                         metadata: {
                             fileName: event.target.files[0].name,
@@ -206,12 +334,37 @@ const App = () => {
         }
     };
 
+    const handleDataSelect = () => {
+        if (state.dataFileName !== '') {
+            if (!confirmVideoReset()) {
+                return;
+            }
+        }
+        resetData();
+        hiddenDataUpload.current.click();
+    };
+
+    const handleDataUpload = (event) => {
+        const fileReader = new FileReader();
+        fileReader.readAsText(event.target.files[0], "UTF-8");
+        var fileName = event.target.files[0].name;
+        fileReader.onload = event => {
+            // Validate data
+            var obj = JSON.parse(event.target.result);
+            if (obj.events && Array.isArray(obj.events) && obj.metadata && obj.metadata.fileName) {
+                setState({ ...state, dataFileName: fileName, data: obj });
+            } else {
+                console.warn("Selected data not valid.")
+            }
+        };
+    };
+
     const handleDownloadData = () => {
         if (state.data.events && state.data.events.length > 0) {
             var dataStr = "data:text/json;charset=utf-8," + encodeURIComponent(JSON.stringify(state.data));
             var downloadAnchorNode = document.createElement('a');
             downloadAnchorNode.setAttribute("href", dataStr);
-            downloadAnchorNode.setAttribute("download", state.videoFileName + "-scored-behavior.json");
+            downloadAnchorNode.setAttribute("download", state.dataFileName + "-scored-behavior.json");
             document.body.appendChild(downloadAnchorNode); // required for firefox
             downloadAnchorNode.click();
             downloadAnchorNode.remove();
@@ -219,24 +372,31 @@ const App = () => {
     };
 
     const handleDownloadSVG = () => {
-        var chartContainer = document.getElementById('chart-container');
-        var svgData = chartContainer.getElementsByTagName('svg')[0].outerHTML;
-        svgData = svgData.replace("<svg", "<svg xmlns=\"http://www.w3.org/2000/svg\"");
+        if (state.data.events && state.data.events.length > 0) {
+            var chartContainer = document.getElementById('chart-container');
+            var svgData = chartContainer.getElementsByTagName('svg')[0].outerHTML;
+            svgData = svgData.replace("<svg", "<svg xmlns=\"http://www.w3.org/2000/svg\"");
 
-        var svgBlob = new Blob([svgData], { type: "image/svg+xml;charset=utf-8" });
-        var svgUrl = URL.createObjectURL(svgBlob);
-        var downloadLink = document.createElement("a");
-        downloadLink.href = svgUrl;
-        downloadLink.download = state.videoFileName + "-scored-behavior.svg";
-        document.body.appendChild(downloadLink);
-        downloadLink.click();
-        document.body.removeChild(downloadLink);
+            var svgBlob = new Blob([svgData], { type: "image/svg+xml;charset=utf-8" });
+            var svgUrl = URL.createObjectURL(svgBlob);
+            var downloadLink = document.createElement("a");
+            downloadLink.href = svgUrl;
+            downloadLink.download = state.dataFileName + "-scored-behavior.svg";
+            document.body.appendChild(downloadLink);
+            downloadLink.click();
+            document.body.removeChild(downloadLink);
+        }
     };
 
     const handleNavigateToGitHub = () => {
         window.open('https://github.com/zacran/video-keypress', '_blank');
     };
 
+    // isPlayingBuffer will never allow starting a video with Space.
+    // This is by design because of autoPlay restrictions in Chrome.
+    // When video is started via Javascript, Chrome assumes it is 
+    // autoplaying; user events such as adjusting the volume or fullsize controls can throw
+    // the state variables out of sync as Chrome fires start/stop commands.
     const handleIsPlayingUpdate = () => {
         isPlayingBuffer = !isPlayingBuffer;
     };
@@ -244,17 +404,15 @@ const App = () => {
     const handleOnStartPlay = () => {
         setState({ ...state, isPlaying: true });
     };
-
     const handleOnPauseStop = () => {
         setState({ ...state, isPlaying: false });
     };
 
     const handleKeydown = (event) => {
-        if (state.videoFilePath !== '' && SPACE_KEYS.includes(String(event.key))) {
-            console.log("space " + event.key, state);
+        if (state.videoFilePath !== '' && state.isVideo && SPACE_KEYS.includes(String(event.key))) {
             event.preventDefault();
             handleIsPlayingUpdate();
-        } else if (state.isPlaying) {
+        } else if (state.isVideo && state.isPlaying) {
             handleKeyevent(event.key, recordKeydown);
         }
     };
@@ -264,16 +422,11 @@ const App = () => {
     };
 
     const handleKeyevent = (key, callback) => {
-        console.log("press " + key, state);
         state.keybinds.forEach(function (keybind) {
-            if ((keybind.key === (String(key)) || keybind.code === (String(key)))) {
+            if (keybind.key === (String(key))) {
                 callback(keybind);
             }
         });
-    };
-
-    const getPlaybackRate = (value) => {
-        return `${value}x`;
     };
 
     const handlePlaybackRateChange = (event, value) => {
@@ -284,19 +437,16 @@ const App = () => {
     const recordKeydown = (keybind) => {
         if (!keybind.active) {
             keybind.active = true;
-            console.log("key down: " + keybind.key + " at " + state.playedSeconds + " secs");
-
             let activity = {
                 key: keybind.key,
                 behavior: keybind.behavior,
-                start: state.playedSeconds
+                order: keybind.order,
+                start: parseFloat(state.playedSeconds.toFixed(3))
             };
 
             let activeRecords = state.activeRecords;
             activeRecords.push(activity);
             setState({ ...state, activeRecords: activeRecords });
-            console.log("recorded activity start: ", activity);
-            console.log(state.activeRecords);
         }
     };
 
@@ -306,13 +456,8 @@ const App = () => {
 
         if (activity) {
             keybind.active = false;
-            console.log("key up: " + keybind.key + " at " + state.playedSeconds + " secs");
-
             activity.id = state.data.events.length;
-            activity.end = state.playedSeconds;
-
-            console.log("recorded activity end: ", activity);
-            console.log(state.activeRecords);
+            activity.end = parseFloat(state.playedSeconds.toFixed(3));
 
             let dataEvents = state.data.events;
             dataEvents.push(activity);
@@ -327,7 +472,6 @@ const App = () => {
                     }
                 }
             });
-            console.log(state.data);
         }
     };
 
@@ -335,18 +479,10 @@ const App = () => {
     useEventListener('keyup', handleKeyup);
 
     const classes = useStyles();
-    const hiddenInput = useRef(null);
+    const hiddenVideoUpload = useRef(null);
+    const hiddenDataUpload = useRef(null);
 
-    const [anchorKeybinds, setAnchorKeybinds] = useState(null);
     const [anchorSettings, setAnchorSettings] = useState(null);
-
-    const handleKeybindMenuClick = (event) => {
-        setAnchorKeybinds(event.currentTarget);
-    };
-
-    const handleKeybindMenuClose = () => {
-        setAnchorKeybinds(null);
-    };
 
     const handleSettingsClick = (event) => {
         setAnchorSettings(event.currentTarget);
@@ -359,102 +495,202 @@ const App = () => {
 
     return (
         <div className="App">
-            <input type="file" ref={hiddenInput} onChange={handleVideoUpload} style={{ display: 'none' }} />
+            <input type="file" ref={hiddenVideoUpload} onChange={handleVideoUpload} style={{ display: 'none' }} />
+            <input type="file" ref={hiddenDataUpload} onChange={handleDataUpload} style={{ display: 'none' }} />
             <StyledMenu
                 className={classes.popoverMenu}
                 anchorEl={anchorSettings}
                 keepMounted
                 open={Boolean(anchorSettings)}
                 onClose={handleSettingsClose}>
+                <ListItemText primary="Settings" align="center" />
+                <ListItemText secondary="Playback Speed" align="center" />
+                <Grid align="center" style={{ paddingBottom: '8px' }}>
+                    <ToggleButtonGroup
+                        size="small"
+                        value={state.playbackRate || 1}
+                        align="center"
+                        exclusive
+                        onChange={handlePlaybackRateChange}
+                        aria-label="playback-rate-togglegroup"
+                    >
+                        <ToggleButton value={0.5} aria-label="centered">
+                            <Typography variant="caption" align="center">0.5x</Typography>
+                        </ToggleButton>
+                        <ToggleButton value={1.0} aria-label="centered">
+                            <Typography variant="caption" align="center">1.0x</Typography>
+                        </ToggleButton>
+                        <ToggleButton value={1.5} aria-label="centered">
+                            <Typography variant="caption" align="center">1.5x</Typography>
+                        </ToggleButton>
+                        <ToggleButton value={2.0} aria-label="centered">
+                            <Typography variant="caption" align="center">2.0x</Typography>
+                        </ToggleButton>
+                    </ToggleButtonGroup>
+                </Grid>
+                <ListItemText secondary="Keybinds" align="center" />
+                <List component="nav"
+                    aria-label="keybinds-list"
+                    className={classes.root}
+                    style={{ paddingTop: '0px' }}
+                    dense
+                >
+                    <ListItem dense>
+                        <ListItemText primary="Pause/Resume" secondary="keybind: space" />
+                    </ListItem>
 
-                <ListItemText id="playbackRate-slider" primary="Playback Speed" align="center" />
-                <Slider
-                    key={`playbackRate-slider`}
-                    className={classes.slider}
-                    value={state.playbackRate || 1}
-                    getAriaValueText={getPlaybackRate}
-                    aria-labelledby="playbackRate-slider"
-                    step={0.25}
-                    marks
-                    min={0.25}
-                    max={2}
-                    valueLabelDisplay="auto"
-                    onChange={handlePlaybackRateChange}
-                />
+                    <Popover
+                        open={openEditKeybind}
+                        anchorEl={anchorEditKeybinds}
+                        disableRestoreFocus
+                        anchorOrigin={{
+                            vertical: 'center',
+                            horizontal: 'left',
+                        }}
+                        transformOrigin={{
+                            vertical: 'center',
+                            horizontal: 'right',
+                        }}
+                    >
+                        <Card className={classes.root} variant="outlined">
+                            <CardContent>
+                                <ListItemText primary="Edit Keybind" secondary="Changes are saved to your browser cache" />
+                                <TextField id="keybind-behavior-input" variant="outlined" size="small"
+                                    label="Behavior Name"
+                                    value={keybindInEdit.behavior}
+                                    onChange={handleEditKeybindChange('behavior')}
+                                />
+                                <TextField id="keybind-key-input" variant="outlined" size="small"
+                                    label="Key"
+                                    inputProps={{ maxLength: 1 }}
+                                    value={keybindInEdit.key}
+                                    onChange={handleEditKeybindChange('key')}
+                                />
+                                {/* <TextField id="keybind-order-input" variant="outlined" size="small"
+                                    label="Order"
+                                    value={keybindInEdit.order}
+                                    onChange={handleEditKeybindChange('order')} /> */}
+                            </CardContent>
+                            <CardActions>
+                                <Tooltip title="Accept">
+                                    <IconButton size="small" className={classes.smallButton} onClick={handleAcceptEditKeybind}>
+                                        <CheckCircleIcon fontSize="small" />
+                                    </IconButton>
+                                </Tooltip>
+                                <Tooltip title="Cancel">
+                                    <IconButton size="small" color="secondary" onClick={handleCancelEditKeybind}>
+                                        <CancelIcon fontSize="small" />
+                                    </IconButton>
+                                </Tooltip>
+                            </CardActions>
+                        </Card>
+                    </Popover>
 
+                    {state.keybinds.map((keybind) =>
+                        <ListItem key={keybind.id} dense>
+                            <ListItemText primary={keybind.behavior} secondary={`keybind: ${keybind.key}`} />
+                            <Tooltip title="Edit Keybind">
+                                <IconButton size="small" className={classes.smallButton} onClick={(e) => (handleTriggerEditKeybind(e, keybind))}>
+                                    <EditIcon fontSize="small" />
+                                </IconButton>
+                            </Tooltip>
+                            <Tooltip title="Delete Keybind">
+                                <IconButton color="secondary" size="small" onClick={(e) => (handleDeleteKeybind(e, keybind))}>
+                                    <DeleteIcon fontSize="small" />
+                                </IconButton>
+                            </Tooltip>
+                        </ListItem>
+                    )}
+                    <Grid align="center">
+                        <Tooltip title="Add New Keybind">
+                            <IconButton color="primary" size="small" className={classes.smallButton} onClick={handleAddNewKeybind}>
+                                <AddCircleIcon fontSize="small" />
+                            </IconButton>
+                        </Tooltip>
+                        <Tooltip title="Reset to Defaults">
+                            <IconButton color="primary" size="small" className={classes.smallButton} onClick={handleResetSettings}>
+                                <SettingsBackupRestoreIcon fontSize="small" />
+                            </IconButton>
+                        </Tooltip>
+                    </Grid>
+
+
+                </List>
             </StyledMenu>
-            <StyledMenu
-                className={classes.popoverMenu}
-                anchorEl={anchorKeybinds}
-                keepMounted
-                open={Boolean(anchorKeybinds)}
-                onClose={handleKeybindMenuClose}>
-                <StyledMenuItem>
-                    {state.isPlaying === false && state.playedSeconds === 0 && (
-                        <ListItemText primary="Start" secondary="space" align="center" />
-                    )}
-                    {state.isPlaying === true && (
-                        <ListItemText primary="Pause" secondary="space" align="center" />
-                    )}
-                    {state.isPlaying === false && state.playedSeconds > 0 && (
-                        <ListItemText primary="Resume" secondary="space" align="center" />
-                    )}
-                </StyledMenuItem>
-                {state.keybinds.map((keybind) =>
-                    <StyledMenuItem key={keybind.key}>
-                        <ListItemText primary={keybind.behavior} secondary={keybind.key} align="center" />
-                    </StyledMenuItem>
-                )}
-                {/* <StyledMenuItem>
-                    <ListItemIcon>
-                        <AddCircleIcon fontSize="small" />
-                    </ListItemIcon>
-                    <ListItemText secondary="Add Keybind" align="center" />
-                </StyledMenuItem> */}
-            </StyledMenu>
+
             <AppBar position="fixed" style={{ background: '#469FAE' }}>
                 <Toolbar className={classes.toolbar}>
                     <Typography variant="h5" component="h1" className={classes.title}>Video Keypress</Typography>
                     <Grid container alignItems="center" className={classes.menu}>
+                        {state.dataFileName && (
+                            <Tooltip title={state.dataFileName}>
+                                <Grid item>
+                                    <Typography variant="caption" display="block" className={classes.restrictedText}>Current {state.isVideo ? "Video" : "Data"}:</Typography>
+                                    <Typography variant="overline" display="block" className={classes.restrictedText}>{state.dataFileName}</Typography>
+                                </Grid>
+                            </Tooltip>
+
+                        )}
+                        {state.dataFileName && (
+                            <Divider orientation="vertical" flexItem />
+                        )}
+                        {state.dataFileName && (
+                            <Tooltip title="Download Data">
+                                <IconButton aria-label="download data"
+                                    color="inherit"
+                                    className={classes.button}
+                                    onClick={handleDownloadData}>
+                                    <GetAppIcon />
+                                </IconButton>
+                            </Tooltip>
+                        )}
+                        {state.dataFileName && (
+                            <Divider orientation="vertical" flexItem />
+                        )}
+                        {state.dataFileName && (
+                            <Tooltip title="Download SVG">
+                                <IconButton aria-label="download svg"
+                                    color="inherit"
+                                    className={classes.button}
+                                    onClick={handleDownloadSVG}>
+                                    <ImageIcon />
+                                </IconButton>
+                            </Tooltip>
+                        )}
+                        {state.dataFileName && (
+                            <Divider orientation="vertical" flexItem />
+                        )}
+                        {state.dataFileName && (
+                            <Tooltip title="Unset Video">
+                                <IconButton aria-label="unset video"
+                                    color="inherit"
+                                    className={classes.button}
+                                    onClick={resetVideo}>
+                                    <CancelIcon />
+                                </IconButton>
+                            </Tooltip>
+                        )}
+                        {state.dataFileName && (
+                            <Divider orientation="vertical" flexItem />
+                        )}
+
                         <Tooltip title="Select Video">
-                            <IconButton aria-label="select video" color="inherit" className={classes.button} onClick={(e) => handleVideoSelect(e)}>
+                            <IconButton aria-label="select video"
+                                color="inherit"
+                                className={classes.button}
+                                onClick={(e) => handleVideoSelect(e)}>
                                 <MovieIcon />
                             </IconButton>
                         </Tooltip>
                         <Divider orientation="vertical" flexItem />
-                        <Tooltip title="Download Data">
-                            <IconButton aria-label="download data"
+                        <Tooltip title="Select Data">
+                            <IconButton aria-label="select data"
                                 color="inherit"
                                 className={classes.button}
-                                onClick={handleDownloadData}>
-                                <GetAppIcon />
+                                onClick={handleDataSelect}>
+                                <CodeIcon />
                             </IconButton>
                         </Tooltip>
-                        <Divider orientation="vertical" flexItem />
-                        <Tooltip title="Download SVG">
-                            <IconButton aria-label="download svg"
-                                color="inherit"
-                                className={classes.button}
-                                onClick={handleDownloadSVG}>
-                                <ImageIcon />
-                            </IconButton>
-                        </Tooltip>
-                        <Divider orientation="vertical" flexItem />
-                        <Tooltip title="Keybinds">
-                            <IconButton aria-label="keybinds"
-                                color="inherit"
-                                aria-haspopup="true"
-                                onClick={handleKeybindMenuClick}
-                                className={classes.button}>
-                                <KeyboardIcon />
-                            </IconButton>
-                        </Tooltip>
-                        {/* <Divider orientation="vertical" flexItem />
-                        <Tooltip title="Data">
-                            <IconButton aria-label="data" color="inherit" className={classes.button}>
-                                <FolderIcon />
-                            </IconButton>
-                        </Tooltip> */}
                         <Divider orientation="vertical" flexItem />
                         <Tooltip title="Settings">
                             <IconButton aria-label="settings"
@@ -469,43 +705,50 @@ const App = () => {
                 </Toolbar>
             </AppBar>
             <div className={classes.content}>
-                {state.videoFilePath ?
-                    <Typography variant="button" display="block" align="center" gutterBottom>
-                        Current Video: {state.videoFileName}
-                        <Tooltip title="Unset Video">
-                            <IconButton aria-label="unset video" color="inherit" className={classes.smallButton} onClick={resetVideo}>
-                                <CancelIcon />
-                            </IconButton>
-                        </Tooltip>
-                    </Typography>
-                    : ""}
-                {!state.videoFilePath ?
-                    <div>
-                        <Typography variant="button" display="block" align="center" gutterBottom>
-                            No video selected
-                    </Typography>
-                        <Tooltip title="Select Video">
-                            <IconButton aria-label="select video" color="inherit" className={classes.largeButton} onClick={(e) => handleVideoSelect(e)}>
+                {!state.dataFileName && (
+                    <div align="center">
+                        <Typography variant="caption" display="block" align="center" gutterBottom>Please select a video or select data from a previous session!</Typography>
+                        <Tooltip title="Select Video" align="center">
+                            <IconButton aria-label="select video"
+                                color="inherit"
+                                className={classes.largeButton}
+                                onClick={(e) => handleVideoSelect(e)}>
                                 <MovieIcon />
                             </IconButton>
                         </Tooltip>
+                        <Tooltip title="Select Data" align="center">
+                            <IconButton aria-label="select video"
+                                color="inherit"
+                                className={classes.largeButton}
+                                onClick={(e) => handleDataSelect(e)}>
+                                <CodeIcon />
+                            </IconButton>
+                        </Tooltip>
                     </div>
-                    : ""}
+                )}
+
                 <div className="Row">
                     <div className="VideoPlay">
-                        <ReactPlayer url={state.videoFilePath}
-                            className={classes.reactPlayer}
-                            playing={isPlayingBuffer}
-                            width="840px"
-                            height="100%"
-                            controls={true}
-                            onDuration={handleDuration}
-                            onProgress={handleProgress}
-                            playbackRate={state.playbackRate || 1}
-                            onPause={handleOnPauseStop}
-                            onStart={handleOnStartPlay}
-                            onPlay={handleOnStartPlay}
-                        />
+                        {state.dataFileName && !state.isVideo && (
+                            <div className={classes.dataText}><pre>{JSON.stringify(state.data, undefined, 2)}</pre></div>
+                        )}
+                        {state.dataFileName && state.isVideo && (
+                            <ReactPlayer url={state.videoFilePath}
+                                className={classes.reactPlayer}
+                                playing={isPlayingBuffer}
+                                width="840px"
+                                height="100%"
+                                autoPlay={false}
+                                muted={true}
+                                controls={true}
+                                onDuration={handleDuration}
+                                onProgress={handleProgress}
+                                playbackRate={state.playbackRate || 1}
+                                onPause={handleOnPauseStop}
+                                onStart={handleOnStartPlay}
+                                onPlay={handleOnStartPlay}
+                            />
+                        )}
                         <div className="Row">
                             <Chart state={state} />
                         </div>
@@ -530,6 +773,11 @@ const App = () => {
                                     <GitHubIcon />
                                 </IconButton>
                             </Tooltip>
+                        </Grid>
+                        <Grid item xs={2}>
+                            <Typography variant="caption" align="center" gutterBottom>
+                                Version {packageJson.version}
+                            </Typography>
                         </Grid>
                         <Grid item xs={3}>
                             <Typography variant="caption" align="center" gutterBottom>

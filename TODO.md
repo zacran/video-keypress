@@ -1,5 +1,7 @@
 # To Do List
 - Add intervals to collate data for different buckets
-- Ability to upload data into chart
 - Allow resizing video
-- Allow customizing keybinds & color
+- Configurable derived fields (occurences, avg. duration, total duration, etc.)
+- Configurable minimum event duration (default is 0.1 second)
+
+# Please reach out if you have suggestions or constructive criticism!
