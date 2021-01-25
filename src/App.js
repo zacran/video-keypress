@@ -1,4 +1,4 @@
-import React, { useState, useRef } from "react";
+import React, { useState, useEffect, useRef } from "react";
 import "./App.css";
 import 'fontsource-roboto';
 import packageJson from '../package.json';
@@ -8,11 +8,11 @@ import MenuItem from '@material-ui/core/MenuItem';
 import AddCircleIcon from '@material-ui/icons/AddCircle';
 import AppBar from '@material-ui/core/AppBar';
 import Toolbar from '@material-ui/core/Toolbar';
-import Chart from "./components/Chart"
+import Chart from "./Chart"
 import CancelIcon from '@material-ui/icons/Cancel';
 import ReactPlayer from "react-player";
 import useEventListener from "@use-it/event-listener";
-import KeybindMap from "./hooks/keybindMap"
+import KeybindMap from "./keybindMap"
 import ImageIcon from '@material-ui/icons/Image';
 import CodeIcon from '@material-ui/icons/Code';
 import FolderIcon from '@material-ui/icons/Folder';
@@ -44,6 +44,7 @@ import CardContent from '@material-ui/core/CardContent';
 import TextField from '@material-ui/core/TextField';
 import Popover from '@material-ui/core/Popover';
 import { makeStyles } from '@material-ui/core/styles';
+import { ExitToApp } from "@material-ui/icons";
 
 const SPACE_KEYS = ['32', ' '];
 
@@ -145,6 +146,7 @@ const StyledMenu = withStyles({
 const App = () => {
     var isPlayingBuffer = false;
     const [keybindInEdit, setKeybindInEdit] = useState({});
+    const [loadedKeybinds, setLoadedKeybind] = useState([]);
     const [anchorEditKeybinds, setAnchorEditKeybinds] = useState(null);
     const [state, setState] = useState({
         dataFileName: '',
@@ -162,6 +164,13 @@ const App = () => {
         activeRecords: [], // activity record between keypress down and keypress up
         derivedFields: []
     });
+
+    useEffect(() => {
+        var savedKeybinds = JSON.parse(localStorage.getItem('keybinds')) || undefined;
+        if (savedKeybinds && Array.isArray(savedKeybinds)) {
+            setState({ ...state, keybinds: savedKeybinds });
+        }
+    }, []);
 
     const confirmVideoReset = () => {
         return window.confirm("Are you sure you wish to reset the existing video? Unsaved data will be lost.");
@@ -188,17 +197,96 @@ const App = () => {
     };
 
     const openEditKeybind = Boolean(anchorEditKeybinds);
+
+    const handleUpdateKeybinds = (keybinds) => {
+        localStorage.setItem('keybinds', JSON.stringify(keybinds));
+
+        var savedKeybinds = JSON.parse(localStorage.getItem('keybinds')) || undefined;
+        if (savedKeybinds && Array.isArray(savedKeybinds)) {
+            setState({ ...state, keybinds: savedKeybinds });
+        }
+    }
+
+    const handleEditKeybindChange = (prop) => (event) => {
+        var value = event.target.value;
+
+        if (value !== undefined) {
+            if (prop === 'order' && value !== '' && value !== NaN)
+                value = parseInt(value);
+
+            if (prop === 'key') {
+                var existingKey = state.keybinds.find(k => k.key == value);
+                if (existingKey) {
+                    // TODO - error notification
+                    return;
+                }
+
+
+            }
+
+            setKeybindInEdit({ ...keybindInEdit, [prop]: value });
+        }
+
+    };
+
     const handleTriggerEditKeybind = (event, keybind) => {
         setKeybindInEdit(keybind);
         setAnchorEditKeybinds(event.currentTarget);
     };
-    const handleAcceptEditKeybind = (event, keybind) => {
-        // setAnchorEditKeybinds(event.currentTarget);
+
+    const handleAddNewKeybind = () => {
+        var keybinds = state.keybinds;
+        var id = Math.max.apply(Math, keybinds.map(function (k) { return k.id; })) || 0;
+        var newId = id++;
+        var order = Math.max.apply(Math, keybinds.map(function (k) { return k.order; })) || 0;
+        var newOrder = order++;
+
+        keybinds.push({
+            id: id, key: '0', order: order, behavior: "New Behavior", active: false
+        });
+
+        setState((state) => {
+            handleUpdateKeybinds(keybinds);
+
+            return { ...state, keybind: keybinds };
+        });
+    };
+
+    const handleAcceptEditKeybind = (event) => {
+        var keybinds = state.keybinds;
+        var index = keybinds.findIndex(k => k.id == keybindInEdit.id);
+        keybinds[index] = keybindInEdit;
+
+
+        setState((state) => {
+            handleUpdateKeybinds(keybinds);
+
+            return { ...state, keybind: keybinds };
+        });
         handleCancelEditKeybind();
     };
+
     const handleCancelEditKeybind = () => {
         setAnchorEditKeybinds(null);
     };
+
+    const handleDeleteKeybind = (event, keybind) => {
+        if (window.confirm("Are you sure you wish to delete this keybind?")) {
+            var keybinds = state.keybinds.filter(k => k.id !== keybind.id);
+            setState((state) => {
+                handleUpdateKeybinds(keybinds);
+
+                return { ...state, keybind: keybinds };
+            });
+        }
+    }
+
+    const handleResetSettings = () => {
+        if (window.confirm("Are you sure you wish to clear local settings?")) {
+            localStorage.clear();
+            setState({ ...state, keybinds: KeybindMap.Keybinds });
+        }
+    }
 
     const handleDuration = (duration) => {
         setState({ ...state, duration: duration });
@@ -334,16 +422,11 @@ const App = () => {
     };
 
     const handleKeyevent = (key, callback) => {
-        // console.log("press " + key, state);
         state.keybinds.forEach(function (keybind) {
-            if ((keybind.key === (String(key)) || keybind.code === (String(key)))) {
+            if (keybind.key === (String(key))) {
                 callback(keybind);
             }
         });
-    };
-
-    const getPlaybackRate = (value) => {
-        return `${value}x`;
     };
 
     const handlePlaybackRateChange = (event, value) => {
@@ -354,8 +437,6 @@ const App = () => {
     const recordKeydown = (keybind) => {
         if (!keybind.active) {
             keybind.active = true;
-            // console.log("key down: " + keybind.key + " at " + state.playedSeconds + " secs");
-
             let activity = {
                 key: keybind.key,
                 behavior: keybind.behavior,
@@ -375,8 +456,6 @@ const App = () => {
 
         if (activity) {
             keybind.active = false;
-            // console.log("key up: " + keybind.key + " at " + state.playedSeconds + " secs");
-
             activity.id = state.data.events.length;
             activity.end = parseFloat(state.playedSeconds.toFixed(3));
 
@@ -403,16 +482,7 @@ const App = () => {
     const hiddenVideoUpload = useRef(null);
     const hiddenDataUpload = useRef(null);
 
-    const [anchorKeybinds, setAnchorKeybinds] = useState(null);
     const [anchorSettings, setAnchorSettings] = useState(null);
-
-    const handleKeybindMenuClick = (event) => {
-        setAnchorKeybinds(event.currentTarget);
-    };
-
-    const handleKeybindMenuClose = () => {
-        setAnchorKeybinds(null);
-    };
 
     const handleSettingsClick = (event) => {
         setAnchorSettings(event.currentTarget);
@@ -437,7 +507,6 @@ const App = () => {
                 <ListItemText secondary="Playback Speed" align="center" />
                 <Grid align="center" style={{ paddingBottom: '8px' }}>
                     <ToggleButtonGroup
-                        dense
                         size="small"
                         value={state.playbackRate || 1}
                         align="center"
@@ -486,9 +555,21 @@ const App = () => {
                         <Card className={classes.root} variant="outlined">
                             <CardContent>
                                 <ListItemText primary="Edit Keybind" secondary="Changes are saved to your browser cache" />
-                                <TextField id="keybind-behavior-input" label="Behavior Name" variant="outlined" value={keybindInEdit.behavior} />
-                                <TextField id="keybind-key-input" label="Key" variant="outlined" value={keybindInEdit.key} />
-                                <TextField id="keybind-order-input" label="Order" variant="outlined" value={keybindInEdit.order} />
+                                <TextField id="keybind-behavior-input" variant="outlined" size="small"
+                                    label="Behavior Name"
+                                    value={keybindInEdit.behavior}
+                                    onChange={handleEditKeybindChange('behavior')}
+                                />
+                                <TextField id="keybind-key-input" variant="outlined" size="small"
+                                    label="Key"
+                                    inputProps={{ maxLength: 1 }}
+                                    value={keybindInEdit.key}
+                                    onChange={handleEditKeybindChange('key')}
+                                />
+                                {/* <TextField id="keybind-order-input" variant="outlined" size="small"
+                                    label="Order"
+                                    value={keybindInEdit.order}
+                                    onChange={handleEditKeybindChange('order')} /> */}
                             </CardContent>
                             <CardActions>
                                 <Tooltip title="Accept">
@@ -506,7 +587,7 @@ const App = () => {
                     </Popover>
 
                     {state.keybinds.map((keybind) =>
-                        <ListItem key={keybind.key} dense>
+                        <ListItem key={keybind.id} dense>
                             <ListItemText primary={keybind.behavior} secondary={`keybind: ${keybind.key}`} />
                             <Tooltip title="Edit Keybind">
                                 <IconButton size="small" className={classes.smallButton} onClick={(e) => (handleTriggerEditKeybind(e, keybind))}>
@@ -514,7 +595,7 @@ const App = () => {
                                 </IconButton>
                             </Tooltip>
                             <Tooltip title="Delete Keybind">
-                                <IconButton color="secondary" size="small">
+                                <IconButton color="secondary" size="small" onClick={(e) => (handleDeleteKeybind(e, keybind))}>
                                     <DeleteIcon fontSize="small" />
                                 </IconButton>
                             </Tooltip>
@@ -522,12 +603,12 @@ const App = () => {
                     )}
                     <Grid align="center">
                         <Tooltip title="Add New Keybind">
-                            <IconButton color="primary" size="small" className={classes.smallButton}>
+                            <IconButton color="primary" size="small" className={classes.smallButton} onClick={handleAddNewKeybind}>
                                 <AddCircleIcon fontSize="small" />
                             </IconButton>
                         </Tooltip>
                         <Tooltip title="Reset to Defaults">
-                            <IconButton color="primary" size="small" className={classes.smallButton}>
+                            <IconButton color="primary" size="small" className={classes.smallButton} onClick={handleResetSettings}>
                                 <SettingsBackupRestoreIcon fontSize="small" />
                             </IconButton>
                         </Tooltip>

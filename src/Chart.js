@@ -3,9 +3,9 @@ import { Chart as GoogleChart } from "react-google-charts";
 import Typography from '@material-ui/core/Typography';
 import Grid from '@material-ui/core/Grid';
 import Paper from '@material-ui/core/Paper';
-import KeybindMap from "../hooks/keybindMap"
+import KeybindMap from "./keybindMap"
 import { makeStyles } from '@material-ui/core/styles';
-import "../App.css";
+import "./App.css";
 
 const COMPUTE_DERIVED_FIELDS_INTERVAL = 1000;
 const MIN_EVENT_DURATION = 0.01; // In seconds
@@ -69,7 +69,8 @@ const Chart = (props) => {
         });
 
         var tempDerivedFields = [];
-        const keybindMap = KeybindMap.Keybinds;
+        const keybindMap = props.state.keybinds;
+
 
         // Derive fields for each unique behavior
         uniqueBehaviors.forEach(behavior => {
