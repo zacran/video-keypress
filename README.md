@@ -8,14 +8,8 @@ React app to record events while watching a video. Data is collated into a JSON 
         "key": "key", # key pressed
         "behavior": "Behavior", # behavior name
         "start": 0.0, # start time of event (in seconds)
-        "end": 4.037488  # end time of event (in seconds)
+        "end": 4.037488,  # end time of event (in seconds)
+        "order: 1 # ordinal position of the behavior wihtin the generated chart; starts at 1
     }
 ```
-
-Default keybinds are:
-  - Space - Play/Pause
-  - S - Scratching
-  - G - Grooming
-
-These can be modified by changing `src/hooks/keybindMap.js` to add or remove keybinds. Space as Play/Pause is hard-coded into the application though! 
 
