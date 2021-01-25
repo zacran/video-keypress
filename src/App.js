@@ -18,6 +18,7 @@ import CodeIcon from '@material-ui/icons/Code';
 import FolderIcon from '@material-ui/icons/Folder';
 import EditIcon from '@material-ui/icons/Edit';
 import DeleteIcon from '@material-ui/icons/Delete';
+import SettingsBackupRestoreIcon from '@material-ui/icons/SettingsBackupRestore';
 import BlockIcon from '@material-ui/icons/Block';
 import List from '@material-ui/core/List';
 import ListSubheader from '@material-ui/core/ListSubheader';
@@ -28,16 +29,20 @@ import GitHubIcon from '@material-ui/icons/GitHub';
 import MovieIcon from '@material-ui/icons/Movie';
 import GetAppIcon from '@material-ui/icons/GetApp';
 import KeyboardIcon from '@material-ui/icons/Keyboard';
+import CheckCircleIcon from '@material-ui/icons/CheckCircle';
 import SettingsIcon from '@material-ui/icons/Settings';
 import IconButton from '@material-ui/core/IconButton';
 import Tooltip from '@material-ui/core/Tooltip';
 import Typography from '@material-ui/core/Typography';
 import Grid from '@material-ui/core/Grid';
-import ButtonGroup from '@material-ui/core/ButtonGroup';
 import Divider from '@material-ui/core/Divider';
 import ToggleButton from '@material-ui/lab/ToggleButton';
 import ToggleButtonGroup from '@material-ui/lab/ToggleButtonGroup';
-import Button from '@material-ui/core/Button';
+import Card from '@material-ui/core/Card';
+import CardActions from '@material-ui/core/CardActions';
+import CardContent from '@material-ui/core/CardContent';
+import TextField from '@material-ui/core/TextField';
+import Popover from '@material-ui/core/Popover';
 import { makeStyles } from '@material-ui/core/styles';
 
 const SPACE_KEYS = ['32', ' '];
@@ -139,6 +144,8 @@ const StyledMenu = withStyles({
 
 const App = () => {
     var isPlayingBuffer = false;
+    const [keybindInEdit, setKeybindInEdit] = useState({});
+    const [anchorEditKeybinds, setAnchorEditKeybinds] = useState(null);
     const [state, setState] = useState({
         dataFileName: '',
         isVideo: false,
@@ -178,6 +185,19 @@ const App = () => {
         if (confirmVideoReset()) {
             resetData();
         }
+    };
+
+    const openEditKeybind = Boolean(anchorEditKeybinds);
+    const handleTriggerEditKeybind = (event, keybind) => {
+        setKeybindInEdit(keybind);
+        setAnchorEditKeybinds(event.currentTarget);
+    };
+    const handleAcceptEditKeybind = (event, keybind) => {
+        // setAnchorEditKeybinds(event.currentTarget);
+        handleCancelEditKeybind();
+    };
+    const handleCancelEditKeybind = () => {
+        setAnchorEditKeybinds(null);
     };
 
     const handleDuration = (duration) => {
@@ -415,7 +435,7 @@ const App = () => {
                 onClose={handleSettingsClose}>
                 <ListItemText primary="Settings" align="center" />
                 <ListItemText secondary="Playback Speed" align="center" />
-                <Grid align="center">
+                <Grid align="center" style={{ paddingBottom: '8px' }}>
                     <ToggleButtonGroup
                         dense
                         size="small"
@@ -443,16 +463,53 @@ const App = () => {
                 <List component="nav"
                     aria-label="keybinds-list"
                     className={classes.root}
+                    style={{ paddingTop: '0px' }}
                     dense
                 >
                     <ListItem dense>
                         <ListItemText primary="Pause/Resume" secondary="keybind: space" />
                     </ListItem>
+
+                    <Popover
+                        open={openEditKeybind}
+                        anchorEl={anchorEditKeybinds}
+                        disableRestoreFocus
+                        anchorOrigin={{
+                            vertical: 'center',
+                            horizontal: 'left',
+                        }}
+                        transformOrigin={{
+                            vertical: 'center',
+                            horizontal: 'right',
+                        }}
+                    >
+                        <Card className={classes.root} variant="outlined">
+                            <CardContent>
+                                <ListItemText primary="Edit Keybind" secondary="Changes are saved to your browser cache" />
+                                <TextField id="keybind-behavior-input" label="Behavior Name" variant="outlined" value={keybindInEdit.behavior} />
+                                <TextField id="keybind-key-input" label="Key" variant="outlined" value={keybindInEdit.key} />
+                                <TextField id="keybind-order-input" label="Order" variant="outlined" value={keybindInEdit.order} />
+                            </CardContent>
+                            <CardActions>
+                                <Tooltip title="Accept">
+                                    <IconButton size="small" className={classes.smallButton} onClick={handleAcceptEditKeybind}>
+                                        <CheckCircleIcon fontSize="small" />
+                                    </IconButton>
+                                </Tooltip>
+                                <Tooltip title="Cancel">
+                                    <IconButton size="small" color="secondary" onClick={handleCancelEditKeybind}>
+                                        <CancelIcon fontSize="small" />
+                                    </IconButton>
+                                </Tooltip>
+                            </CardActions>
+                        </Card>
+                    </Popover>
+
                     {state.keybinds.map((keybind) =>
                         <ListItem key={keybind.key} dense>
                             <ListItemText primary={keybind.behavior} secondary={`keybind: ${keybind.key}`} />
                             <Tooltip title="Edit Keybind">
-                                <IconButton size="small" className={classes.smallButton}>
+                                <IconButton size="small" className={classes.smallButton} onClick={(e) => (handleTriggerEditKeybind(e, keybind))}>
                                     <EditIcon fontSize="small" />
                                 </IconButton>
                             </Tooltip>
@@ -467,6 +524,11 @@ const App = () => {
                         <Tooltip title="Add New Keybind">
                             <IconButton color="primary" size="small" className={classes.smallButton}>
                                 <AddCircleIcon fontSize="small" />
+                            </IconButton>
+                        </Tooltip>
+                        <Tooltip title="Reset to Defaults">
+                            <IconButton color="primary" size="small" className={classes.smallButton}>
+                                <SettingsBackupRestoreIcon fontSize="small" />
                             </IconButton>
                         </Tooltip>
                     </Grid>
