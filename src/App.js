@@ -218,6 +218,7 @@ const App = () => {
                 var existingKey = state.keybinds.find(k => k.key == value);
                 if (existingKey) {
                     // TODO - error notification
+                    console.error("Unable to set key to " + value);
                     return;
                 }
 
@@ -503,8 +504,8 @@ const App = () => {
                 keepMounted
                 open={Boolean(anchorSettings)}
                 onClose={handleSettingsClose}>
-                <ListItemText primary="Settings" align="center" />
-                <ListItemText secondary="Playback Speed" align="center" />
+                <ListItemText primary="Settings" align="center" disabled />
+                <ListItemText secondary="Playback Speed" align="center" disabled />
                 <Grid align="center" style={{ paddingBottom: '8px' }}>
                     <ToggleButtonGroup
                         size="small"
@@ -528,7 +529,7 @@ const App = () => {
                         </ToggleButton>
                     </ToggleButtonGroup>
                 </Grid>
-                <ListItemText secondary="Keybinds" align="center" />
+                <ListItemText secondary="Keybinds" align="center" disabled />
                 <List component="nav"
                     aria-label="keybinds-list"
                     className={classes.root}
@@ -557,13 +558,13 @@ const App = () => {
                                 <ListItemText primary="Edit Keybind" secondary="Changes are saved to your browser cache" />
                                 <TextField id="keybind-behavior-input" variant="outlined" size="small"
                                     label="Behavior Name"
-                                    value={keybindInEdit.behavior}
+                                    defaultValue={keybindInEdit.behavior}
                                     onChange={handleEditKeybindChange('behavior')}
                                 />
                                 <TextField id="keybind-key-input" variant="outlined" size="small"
                                     label="Key"
                                     inputProps={{ maxLength: 1 }}
-                                    value={keybindInEdit.key}
+                                    defaultValue={keybindInEdit.key}
                                     onChange={handleEditKeybindChange('key')}
                                 />
                                 {/* <TextField id="keybind-order-input" variant="outlined" size="small"
