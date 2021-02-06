@@ -70,8 +70,7 @@ const useStyles = makeStyles((theme) => ({
         display: 'inline-block',
         margin: 'auto',
         '& svg': {
-            fontSize: 144,
-            color: "#469FAE"
+            fontSize: 144
         }
     },
     toolbar: {
@@ -608,12 +607,12 @@ const App = () => {
                             <ListItem key={keybind.id} dense>
                                 <ListItemText primary={keybind.behavior} secondary={`keybind: ${keybind.key}`} />
                                 <Tooltip title="Edit Keybind">
-                                    <IconButton size="small" className={classes.smallButton} onClick={(e) => (handleTriggerEditKeybind(e, keybind))}>
+                                    <IconButton size="small" color="primary" onClick={(e) => (handleTriggerEditKeybind(e, keybind))}>
                                         <EditIcon fontSize="small" />
                                     </IconButton>
                                 </Tooltip>
                                 <Tooltip title="Delete Keybind">
-                                    <IconButton color="secondary" size="small" onClick={(e) => (handleDeleteKeybind(e, keybind))}>
+                                    <IconButton size="small" color="secondary" onClick={(e) => (handleDeleteKeybind(e, keybind))}>
                                         <DeleteIcon fontSize="small" />
                                     </IconButton>
                                 </Tooltip>
@@ -621,12 +620,12 @@ const App = () => {
                         )}
                         <Grid align="center">
                             <Tooltip title="Add New Keybind">
-                                <IconButton color="primary" size="small" className={classes.smallButton} onClick={handleAddNewKeybind}>
+                                <IconButton color="primary" size="small" onClick={handleAddNewKeybind}>
                                     <AddCircleIcon fontSize="small" />
                                 </IconButton>
                             </Tooltip>
                             <Tooltip title="Reset to Defaults">
-                                <IconButton color="primary" size="small" className={classes.smallButton} onClick={handleResetSettings}>
+                                <IconButton color="primary" size="small" onClick={handleResetSettings}>
                                     <SettingsBackupRestoreIcon fontSize="small" />
                                 </IconButton>
                             </Tooltip>
@@ -636,7 +635,7 @@ const App = () => {
                     </List>
                 </StyledMenu>
 
-                <AppBar position="fixed" style={{ background: '#469FAE' }}>
+                <AppBar position="fixed" color="primary" >
                     <Toolbar className={classes.toolbar}>
                         <Typography variant="h5" component="h1" className={classes.title}>Video Keypress</Typography>
                         <Grid container alignItems="center" className={classes.menu}>
@@ -728,7 +727,7 @@ const App = () => {
                             <Typography variant="caption" display="block" align="center" gutterBottom>Please select a video or select data from a previous session!</Typography>
                             <Tooltip title="Select Video" align="center">
                                 <IconButton aria-label="select video"
-                                    color="inherit"
+                                    color="primary"
                                     className={classes.largeButton}
                                     onClick={(e) => handleVideoSelect(e)}>
                                     <MovieIcon />
@@ -736,7 +735,7 @@ const App = () => {
                             </Tooltip>
                             <Tooltip title="Select Data" align="center">
                                 <IconButton aria-label="select video"
-                                    color="inherit"
+                                    color="primary"
                                     className={classes.largeButton}
                                     onClick={(e) => handleDataSelect(e)}>
                                     <CodeIcon />
@@ -792,12 +791,12 @@ const App = () => {
                                     </IconButton>
                                 </Tooltip>
                             </Grid>
-                            <Grid item xs={2}>
+                            <Grid item xs={1}>
                                 <Typography variant="caption" align="center" gutterBottom>
-                                    Version {packageJson.version}
+                                    v{packageJson.version}
                                 </Typography>
                             </Grid>
-                            <Grid item xs={3}>
+                            <Grid item xs={4}>
                                 <Typography variant="caption" align="center" gutterBottom>
                                     GNU General Public License
                             </Typography>
