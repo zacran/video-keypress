@@ -3,7 +3,6 @@ import { Chart as GoogleChart } from "react-google-charts";
 import Typography from '@material-ui/core/Typography';
 import Grid from '@material-ui/core/Grid';
 import Paper from '@material-ui/core/Paper';
-import KeybindMap from "./keybindMap"
 import { makeStyles } from '@material-ui/core/styles';
 import "./App.css";
 
@@ -113,8 +112,6 @@ const Chart = (props) => {
 
         setDerivedFields((derivedFields) => {
             derivedFields = tempDerivedFields;
-            console.log(derivedFields);
-
             return derivedFields;
         });
         props.state.derivedFields = derivedFields;
@@ -275,6 +272,17 @@ const Chart = (props) => {
                             colors: ['transparent', '#469FAE', '#3ECDB6', '#C09BD8', '#F67E5C', '#CA1252', '#DD5B5C', '#D9959A', '#938D99', '#5E614A'],
                         }}
                         rootProps={{ 'data-testid': '6' }}
+                        chartEvents={[
+                            {
+                                eventName: 'select',
+                                callback: ({ chartWrapper }) => {
+                                    const chart = chartWrapper.getChart()
+                                    const selection = chart.getSelection()[0]
+                                    console.log(formattedData[selection.row + 1]);
+
+                                },
+                            },
+                        ]}
                     />
                 )}
             </div>
