@@ -8,11 +8,22 @@ import Accordion from '@material-ui/core/Accordion';
 import AccordionSummary from '@material-ui/core/AccordionSummary';
 import AccordionDetails from '@material-ui/core/AccordionDetails';
 import ExpandMoreIcon from '@material-ui/icons/ExpandMore';
+import Button from '@material-ui/core/Button';
+import Snackbar from '@material-ui/core/Snackbar';
+import IconButton from '@material-ui/core/IconButton';
+import CloseIcon from '@material-ui/icons/Close';
+import MuiAlert from '@material-ui/lab/Alert';
+import DeleteIcon from '@material-ui/icons/Delete';
 import { makeStyles } from '@material-ui/core/styles';
 import "./App.css";
 
-const COMPUTE_DERIVED_FIELDS_INTERVAL = 1000;
+const COMPUTE_DERIVED_FIELDS_INTERVAL = 1000; // In milliseconds
 const MIN_EVENT_DURATION = 0.01; // In seconds
+const EVENT_LABEL = "Event: #"
+
+function Alert(props) {
+    return <MuiAlert elevation={6} variant="filled" {...props} />;
+}
 
 function convertToMilliseconds(value) {
     return value * 1000
@@ -56,6 +67,7 @@ const Chart = (props) => {
     const [derivedFields, setDerivedFields] = useState([]);
     const [cachedNumHeaderRows, setCachedNumHeaderRows] = useState(0);
     const [cachedFormattedDataSize, setCachedFormattedDataSize] = useState(0);
+    const [selectedChartElement, setSelectedChartElement] = useState({});
 
     const classes = useStyles();
 
@@ -162,7 +174,7 @@ const Chart = (props) => {
 
         return [
             latestEvent.behavior,
-            "Event: #" + latestEvent.id,
+            EVENT_LABEL + latestEvent.id,
             convertToMilliseconds(latestEvent.start),
             convertToMilliseconds(latestEvent.end)
         ];
@@ -248,8 +260,33 @@ const Chart = (props) => {
         { field: 'avgDuration', headerName: 'Avg Duration', type: 'number', width: 200, valueFormatter: (params) => formatTime(params.value), },
         { field: 'totalDuration', headerName: 'Total Duration', type: 'number', width: 200, valueFormatter: (params) => formatTime(params.value), },
     ];
+
     const getDerivedFieldsTableHeight = () => {
         return (derivedFields.length > 0 ? (55 * derivedFields.length) + 3 : 75);
+    };
+
+    const handleResolveSelectedChartElement = (event, reason) => {
+        if (reason === 'clickaway') {
+            return;
+        }
+
+        setSelectedChartElement({ active: false });
+    };
+
+    const handleDeleteSelectedChartElement = () => {
+        // Remove data with that ID from formattedData and from the data
+        var adjustedFormattedData = formattedData.filter(function (arr) {
+            return arr[1] !== selectedChartElement.id;
+        });
+        setFormattedData(adjustedFormattedData);
+
+        var id = selectedChartElement.id.replace(EVENT_LABEL, "");
+        var adjustedData = props.state.data.events.filter(function (obj) {
+            return obj.id !== id;
+        });
+        props.state.data.events = adjustedData;
+        console.log(props.state.data.events);
+
     };
 
     return (
@@ -291,15 +328,43 @@ const Chart = (props) => {
                             {
                                 eventName: 'select',
                                 callback: ({ chartWrapper }) => {
-                                    const chart = chartWrapper.getChart()
-                                    const selection = chart.getSelection()[0]
-                                    console.log(formattedData[selection.row + 1]);
+                                    var chart = chartWrapper.getChart()
+                                    var selection = chart.getSelection()[0]
+                                    var formattedSelection = formattedData[selection.row + 1];
+                                    var selectedObject = {
+                                        behavior: formattedSelection[0],
+                                        id: formattedSelection[1],
+                                        start: formattedSelection[2],
+                                        end: formattedSelection[3],
+                                        active: true
+                                    };
+                                    if (selectedObject.id !== 'Meta')
+                                        setSelectedChartElement(selectedObject);
 
+                                    console.log(selectedObject);
                                 },
                             },
                         ]}
                     />
                 )}
+            </div>
+            <div>
+                <Snackbar
+                    open={selectedChartElement.active}
+                    autoHideDuration={null}
+                    onClose={handleResolveSelectedChartElement}
+                    message={`Selected: ${selectedChartElement.id}`}
+                    action={
+                        <React.Fragment>
+                            <IconButton size="small" aria-label="delete" color="secondary" onClick={handleDeleteSelectedChartElement}>
+                                <DeleteIcon fontSize="small" />
+                            </IconButton>
+                            <IconButton size="small" aria-label="close" color="inherit" onClick={handleResolveSelectedChartElement}>
+                                <CloseIcon fontSize="small" />
+                            </IconButton>
+                        </React.Fragment>
+                    }>
+                </Snackbar>
             </div>
         </div>
     );
