@@ -3,6 +3,11 @@ import { Chart as GoogleChart } from "react-google-charts";
 import Typography from '@material-ui/core/Typography';
 import Grid from '@material-ui/core/Grid';
 import Paper from '@material-ui/core/Paper';
+import { DataGrid } from '@material-ui/data-grid';
+import Accordion from '@material-ui/core/Accordion';
+import AccordionSummary from '@material-ui/core/AccordionSummary';
+import AccordionDetails from '@material-ui/core/AccordionDetails';
+import ExpandMoreIcon from '@material-ui/icons/ExpandMore';
 import { makeStyles } from '@material-ui/core/styles';
 import "./App.css";
 
@@ -23,13 +28,23 @@ const useStyles = makeStyles((theme) => ({
     root: {
         flexGrow: 1,
         margin: 'auto',
-        maxWidth: '600px'
+        maxWidth: '600px',
+    },
+    accordion: {
+        margin: 'auto',
+        maxWidth: '840px',
+        marginBottom: '20px',
+    },
+    details: {
+        flexDirection: "column"
     },
     paper: {
         padding: theme.spacing(1),
         fontSize: '12px',
         textAlign: 'center',
-        color: theme.palette.text.secondary,
+        backgroundColor: theme.palette.primary.main,
+        color: theme.palette.secondary.contrastText,
+        flexBasis: '25%',
     },
     control: {
         padding: theme.spacing(2),
@@ -70,7 +85,7 @@ const Chart = (props) => {
         var tempDerivedFields = [];
         const keybindMap = props.state.keybinds;
 
-
+        var id = 0;
         // Derive fields for each unique behavior
         uniqueBehaviors.forEach(behavior => {
             var occurences = 0, totalDuration = 0;
@@ -89,7 +104,8 @@ const Chart = (props) => {
             if (occurences === 0) avgDuration = 0;
 
             var derivedField = {
-                order: order,
+                id: id,
+                order: null,
                 behavior: behavior,
                 occurences: occurences,
                 totalDuration: totalDuration,
@@ -97,6 +113,7 @@ const Chart = (props) => {
             }
 
             tempDerivedFields.push(derivedField);
+            id++;
         });
 
         // Sort derived fields by order property
@@ -112,6 +129,7 @@ const Chart = (props) => {
 
         setDerivedFields((derivedFields) => {
             derivedFields = tempDerivedFields;
+            console.log(derivedFields);
             return derivedFields;
         });
         props.state.derivedFields = derivedFields;
@@ -224,37 +242,34 @@ const Chart = (props) => {
         }
     });
 
+    const derivedFieldsColumns = [
+        { field: 'behavior', headerName: 'Behavior', width: 200 },
+        { field: 'occurences', headerName: 'Occurences', type: 'number', width: 200, valueFormatter: (params) => params.value, },
+        { field: 'avgDuration', headerName: 'Avg Duration', type: 'number', width: 200, valueFormatter: (params) => formatTime(params.value), },
+        { field: 'totalDuration', headerName: 'Total Duration', type: 'number', width: 200, valueFormatter: (params) => formatTime(params.value), },
+    ];
+    const getDerivedFieldsTableHeight = () => {
+        return (derivedFields.length > 0 ? (55 * derivedFields.length) + 3 : 75);
+    };
+
     return (
         <div className="Row">
-            {derivedFields.length > 0 && (
-                derivedFields.map((derivedField) =>
-                    <Grid container className={classes.root} spacing={2} key={derivedField.behavior}>
-                        <Grid item xs={3}>
-                            <Paper className={classes.paper}>
-                                <Typography variant="caption" display="inline" gutterBottom>    Behavior:   </Typography>
-                                <Typography variant="subtitle2" display="block" align="center" gutterBottom >{derivedField.behavior}</Typography>
-                            </Paper>
-                        </Grid>
-                        <Grid item xs={3}>
-                            <Paper className={classes.paper}>
-                                <Typography variant="caption" display="inline" gutterBottom>    Occurences: </Typography>
-                                <Typography variant="subtitle2" display="block" align="center" gutterBottom >{derivedField.occurences}</Typography>
-                            </Paper>
-                        </Grid>
-                        <Grid item xs={3}>
-                            <Paper className={classes.paper}>
-                                <Typography variant="caption" display="inline" gutterBottom>    Avg Duration:   </Typography>
-                                <Typography variant="subtitle2" display="block" align="center" gutterBottom >{formatTime(derivedField.avgDuration)}</Typography>
-                            </Paper>
-                        </Grid>
-                        <Grid item xs={3}>
-                            <Paper className={classes.paper}>
-                                <Typography variant="caption" display="inline" gutterBottom>    Total Duration:    </Typography>
-                                <Typography variant="subtitle2" display="block" align="center" gutterBottom >{formatTime(derivedField.totalDuration)}</Typography>
-                            </Paper>
-                        </Grid>
-                    </Grid>
-                )
+            {props.state.dataFileName !== '' && (
+                <Accordion className={classes.accordion}>
+                    <AccordionSummary expandIcon={<ExpandMoreIcon />} aria-controls="derivedfields-content">
+                        <Typography variant="caption">Derived Fields</Typography>
+                    </AccordionSummary>
+                    <AccordionDetails className={classes.accordion}>
+                        <div style={{ height: getDerivedFieldsTableHeight(), width: '100%' }}>
+                            <DataGrid rows={derivedFields}
+                                columns={derivedFieldsColumns}
+                                autoPageSize={true}
+                                density="compact"
+                                hideFooter={true}
+                            />
+                        </div>
+                    </AccordionDetails>
+                </Accordion>
             )}
             <div id="chart-container" className="GoogleChart">
                 {formattedData.length > 1 && (

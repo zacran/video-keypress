@@ -5,6 +5,11 @@
   color: rgb(55, 55, 55);
 }
 
+.MuiAccordion-root.Mui-expanded:first-child {
+  margin: auto;
+  margin-bottom: 20px;
+}
+
 .Row {
   justify-content: center;
   margin: 15px;
