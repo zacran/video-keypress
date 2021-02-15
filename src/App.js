@@ -145,6 +145,7 @@ const App = () => {
         playedSeconds: 0,
         loadedSeconds: 0,
         playbackRate: 1,
+        videoSize: '840px',
         keybinds: KeybindMap.Keybinds,
         data: {
             metadata: {},
@@ -434,6 +435,11 @@ const App = () => {
         });
     };
 
+    const handleVideoSizeChange = (event, value) => {
+        if (value !== state.videoSize)
+            setState({ ...state, videoSize: value })
+    };
+
     const handlePlaybackRateChange = (event, value) => {
         if (value !== state.playbackRate)
             setState({ ...state, playbackRate: parseFloat(value) })
@@ -511,6 +517,27 @@ const App = () => {
                     open={Boolean(anchorSettings)}
                     onClose={handleSettingsClose}>
                     <ListItemText primary="Settings" align="center" disabled />
+                    <ListItemText secondary="Video Size" align="center" disabled />
+                    <Grid align="center" style={{ paddingBottom: '8px' }}>
+                        <ToggleButtonGroup
+                            size="small"
+                            value={state.videoSize || '840px'}
+                            align="center"
+                            exclusive
+                            onChange={handleVideoSizeChange}
+                            aria-label="video-size-togglegroup"
+                        >
+                            <ToggleButton value={'600px'} aria-label="centered">
+                                <Typography variant="caption" align="center">600px</Typography>
+                            </ToggleButton>
+                            <ToggleButton value={'840px'} aria-label="centered">
+                                <Typography variant="caption" align="center">840px</Typography>
+                            </ToggleButton>
+                            <ToggleButton value={'1080px'} aria-label="centered">
+                                <Typography variant="caption" align="center">1080px</Typography>
+                            </ToggleButton>
+                        </ToggleButtonGroup>
+                    </Grid>
                     <ListItemText secondary="Playback Speed" align="center" disabled />
                     <Grid align="center" style={{ paddingBottom: '8px' }}>
                         <ToggleButtonGroup
@@ -753,7 +780,7 @@ const App = () => {
                                 <ReactPlayer url={state.videoFilePath}
                                     className={classes.reactPlayer}
                                     playing={isPlayingBuffer}
-                                    width="840px"
+                                    width={state.videoSize}
                                     height="100%"
                                     autoPlay={false}
                                     muted={true}
@@ -773,7 +800,7 @@ const App = () => {
                     </div>
                 </div>
 
-                <AppBar position="fixed" color="transparent" className={classes.bottomAppBar}>
+                <AppBar position="fixed" color="primary" className={classes.bottomAppBar}>
                     <Toolbar className={classes.bottomToolbar}>
                         <Grid container alignItems="center" spacing={2}>
                             <Grid item xs={6}>
