@@ -23,6 +23,7 @@
     "react-google-charts": "^3.0.15",
     "react-player": "^2.7.0",
     "react-scripts": "4.0.1",
+    "reactn": "^2.2.7",
     "web-vitals": "^0.2.4"
   },
   "scripts": {

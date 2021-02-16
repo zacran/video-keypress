@@ -1,46 +1,44 @@
-import React, { useState, useEffect, useRef } from "react";
-import "./App.css";
-import 'fontsource-roboto';
-import packageJson from '../package.json';
-import { withStyles } from '@material-ui/core/styles';
-import Menu from '@material-ui/core/Menu';
-import AddCircleIcon from '@material-ui/icons/AddCircle';
 import AppBar from '@material-ui/core/AppBar';
-import Toolbar from '@material-ui/core/Toolbar';
-import Chart from "./Chart"
-import CancelIcon from '@material-ui/icons/Cancel';
-import ReactPlayer from "react-player";
-import useEventListener from "@use-it/event-listener";
-import KeybindMap from "./keybindMap"
-import ImageIcon from '@material-ui/icons/Image';
-import CodeIcon from '@material-ui/icons/Code';
-import EditIcon from '@material-ui/icons/Edit';
-import DeleteIcon from '@material-ui/icons/Delete';
-import SettingsBackupRestoreIcon from '@material-ui/icons/SettingsBackupRestore';
-import List from '@material-ui/core/List';
-import ListItem from '@material-ui/core/ListItem';
-import ListItemText from '@material-ui/core/ListItemText';
-import GitHubIcon from '@material-ui/icons/GitHub';
-import MovieIcon from '@material-ui/icons/Movie';
-import GetAppIcon from '@material-ui/icons/GetApp';
-import CheckCircleIcon from '@material-ui/icons/CheckCircle';
-import SettingsIcon from '@material-ui/icons/Settings';
-import IconButton from '@material-ui/core/IconButton';
-import Tooltip from '@material-ui/core/Tooltip';
-import Typography from '@material-ui/core/Typography';
-import Grid from '@material-ui/core/Grid';
-import Divider from '@material-ui/core/Divider';
-import ToggleButton from '@material-ui/lab/ToggleButton';
-import ToggleButtonGroup from '@material-ui/lab/ToggleButtonGroup';
 import Card from '@material-ui/core/Card';
 import CardActions from '@material-ui/core/CardActions';
 import CardContent from '@material-ui/core/CardContent';
-import TextField from '@material-ui/core/TextField';
+import CssBaseline from '@material-ui/core/CssBaseline';
+import Divider from '@material-ui/core/Divider';
+import Grid from '@material-ui/core/Grid';
+import IconButton from '@material-ui/core/IconButton';
+import List from '@material-ui/core/List';
+import ListItem from '@material-ui/core/ListItem';
+import ListItemText from '@material-ui/core/ListItemText';
+import Menu from '@material-ui/core/Menu';
 import Popover from '@material-ui/core/Popover';
-import { makeStyles } from '@material-ui/core/styles';
-import Theme from './Theme'
-import { ThemeProvider } from '@material-ui/core/styles'
-import CssBaseline from '@material-ui/core/CssBaseline'
+import { makeStyles, ThemeProvider, withStyles } from '@material-ui/core/styles';
+import TextField from '@material-ui/core/TextField';
+import Toolbar from '@material-ui/core/Toolbar';
+import Tooltip from '@material-ui/core/Tooltip';
+import Typography from '@material-ui/core/Typography';
+import AddCircleIcon from '@material-ui/icons/AddCircle';
+import CancelIcon from '@material-ui/icons/Cancel';
+import CheckCircleIcon from '@material-ui/icons/CheckCircle';
+import CodeIcon from '@material-ui/icons/Code';
+import DeleteIcon from '@material-ui/icons/Delete';
+import EditIcon from '@material-ui/icons/Edit';
+import GetAppIcon from '@material-ui/icons/GetApp';
+import GitHubIcon from '@material-ui/icons/GitHub';
+import ImageIcon from '@material-ui/icons/Image';
+import MovieIcon from '@material-ui/icons/Movie';
+import SettingsIcon from '@material-ui/icons/Settings';
+import SettingsBackupRestoreIcon from '@material-ui/icons/SettingsBackupRestore';
+import ToggleButton from '@material-ui/lab/ToggleButton';
+import ToggleButtonGroup from '@material-ui/lab/ToggleButtonGroup';
+import useEventListener from "@use-it/event-listener";
+import { useEffect, useRef, useState } from "react";
+import ReactPlayer from "react-player";
+import React, { useGlobal } from 'reactn';
+import packageJson from '../package.json';
+import "./App.css";
+import Chart from "./Chart";
+import KeybindMap from "./keybindMap";
+import Theme from './Theme';
 
 const SPACE_KEYS = ['32', ' '];
 
@@ -137,23 +135,7 @@ const App = () => {
     var isPlayingBuffer = false;
     const [keybindInEdit, setKeybindInEdit] = useState({});
     const [anchorEditKeybinds, setAnchorEditKeybinds] = useState(null);
-    const [state, setState] = useState({
-        dataFileName: '',
-        isVideo: false,
-        isPlaying: false,
-        duration: 0,
-        playedSeconds: 0,
-        loadedSeconds: 0,
-        playbackRate: 1,
-        videoSize: '840px',
-        keybinds: KeybindMap.Keybinds,
-        data: {
-            metadata: {},
-            events: []
-        }, // persisted data records
-        activeRecords: [], // activity record between keypress down and keypress up
-        derivedFields: []
-    });
+    const [state, setState] = useGlobal('state');
 
     useEffect(() => {
         var savedKeybinds = JSON.parse(localStorage.getItem('keybinds')) || undefined;
@@ -466,9 +448,13 @@ const App = () => {
         let activeRecords = state.activeRecords.filter(obj => obj.key !== keybind.key);
 
         if (activity) {
+            var end = state.playedSeconds.toFixed(3);
+            var id = Math.max.apply(Math, state.data.events.map(function (e) { return e.id; }));
+            id = (isFinite(id) ? id + 1 : 0);
             keybind.active = false;
-            activity.id = state.data.events.length;
-            activity.end = parseFloat(state.playedSeconds.toFixed(3));
+            // activity.id = keybind.behavior + " @ " + end;
+            activity.id = id;
+            activity.end = parseFloat(end);
 
             let dataEvents = state.data.events;
             dataEvents.push(activity);
