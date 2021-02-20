@@ -1,50 +1,44 @@
-import React, { useState, useEffect, useRef } from "react";
-import "./App.css";
-import 'fontsource-roboto';
-import packageJson from '../package.json';
-import { withStyles } from '@material-ui/core/styles';
-import Menu from '@material-ui/core/Menu';
-import MenuItem from '@material-ui/core/MenuItem';
-import AddCircleIcon from '@material-ui/icons/AddCircle';
 import AppBar from '@material-ui/core/AppBar';
-import Toolbar from '@material-ui/core/Toolbar';
-import Chart from "./Chart"
-import CancelIcon from '@material-ui/icons/Cancel';
-import ReactPlayer from "react-player";
-import useEventListener from "@use-it/event-listener";
-import KeybindMap from "./keybindMap"
-import ImageIcon from '@material-ui/icons/Image';
-import CodeIcon from '@material-ui/icons/Code';
-import FolderIcon from '@material-ui/icons/Folder';
-import EditIcon from '@material-ui/icons/Edit';
-import DeleteIcon from '@material-ui/icons/Delete';
-import SettingsBackupRestoreIcon from '@material-ui/icons/SettingsBackupRestore';
-import BlockIcon from '@material-ui/icons/Block';
-import List from '@material-ui/core/List';
-import ListSubheader from '@material-ui/core/ListSubheader';
-import ListItem from '@material-ui/core/ListItem';
-import ListItemIcon from '@material-ui/core/ListItemIcon';
-import ListItemText from '@material-ui/core/ListItemText';
-import GitHubIcon from '@material-ui/icons/GitHub';
-import MovieIcon from '@material-ui/icons/Movie';
-import GetAppIcon from '@material-ui/icons/GetApp';
-import KeyboardIcon from '@material-ui/icons/Keyboard';
-import CheckCircleIcon from '@material-ui/icons/CheckCircle';
-import SettingsIcon from '@material-ui/icons/Settings';
-import IconButton from '@material-ui/core/IconButton';
-import Tooltip from '@material-ui/core/Tooltip';
-import Typography from '@material-ui/core/Typography';
-import Grid from '@material-ui/core/Grid';
-import Divider from '@material-ui/core/Divider';
-import ToggleButton from '@material-ui/lab/ToggleButton';
-import ToggleButtonGroup from '@material-ui/lab/ToggleButtonGroup';
 import Card from '@material-ui/core/Card';
 import CardActions from '@material-ui/core/CardActions';
 import CardContent from '@material-ui/core/CardContent';
-import TextField from '@material-ui/core/TextField';
+import CssBaseline from '@material-ui/core/CssBaseline';
+import Divider from '@material-ui/core/Divider';
+import Grid from '@material-ui/core/Grid';
+import IconButton from '@material-ui/core/IconButton';
+import List from '@material-ui/core/List';
+import ListItem from '@material-ui/core/ListItem';
+import ListItemText from '@material-ui/core/ListItemText';
+import Menu from '@material-ui/core/Menu';
 import Popover from '@material-ui/core/Popover';
-import { makeStyles } from '@material-ui/core/styles';
-import { ExitToApp } from "@material-ui/icons";
+import { makeStyles, ThemeProvider, withStyles } from '@material-ui/core/styles';
+import TextField from '@material-ui/core/TextField';
+import Toolbar from '@material-ui/core/Toolbar';
+import Tooltip from '@material-ui/core/Tooltip';
+import Typography from '@material-ui/core/Typography';
+import AddCircleIcon from '@material-ui/icons/AddCircle';
+import CancelIcon from '@material-ui/icons/Cancel';
+import CheckCircleIcon from '@material-ui/icons/CheckCircle';
+import CodeIcon from '@material-ui/icons/Code';
+import DeleteIcon from '@material-ui/icons/Delete';
+import EditIcon from '@material-ui/icons/Edit';
+import GetAppIcon from '@material-ui/icons/GetApp';
+import GitHubIcon from '@material-ui/icons/GitHub';
+import ImageIcon from '@material-ui/icons/Image';
+import MovieIcon from '@material-ui/icons/Movie';
+import SettingsIcon from '@material-ui/icons/Settings';
+import SettingsBackupRestoreIcon from '@material-ui/icons/SettingsBackupRestore';
+import ToggleButton from '@material-ui/lab/ToggleButton';
+import ToggleButtonGroup from '@material-ui/lab/ToggleButtonGroup';
+import useEventListener from "@use-it/event-listener";
+import { useEffect, useRef, useState } from "react";
+import ReactPlayer from "react-player";
+import React, { useGlobal } from 'reactn';
+import packageJson from '../package.json';
+import "./App.css";
+import Chart from "./Chart";
+import KeybindMap from "./keybindMap";
+import Theme from './Theme';
 
 const SPACE_KEYS = ['32', ' '];
 
@@ -70,17 +64,11 @@ const useStyles = makeStyles((theme) => ({
     button: {
         padding: 0,
     },
-    smallButton: {
-        '& svg': {
-            color: "#469FAE"
-        }
-    },
     largeButton: {
         display: 'inline-block',
         margin: 'auto',
         '& svg': {
-            fontSize: 144,
-            color: "#469FAE"
+            fontSize: 144
         }
     },
     toolbar: {
@@ -146,24 +134,8 @@ const StyledMenu = withStyles({
 const App = () => {
     var isPlayingBuffer = false;
     const [keybindInEdit, setKeybindInEdit] = useState({});
-    const [loadedKeybinds, setLoadedKeybind] = useState([]);
     const [anchorEditKeybinds, setAnchorEditKeybinds] = useState(null);
-    const [state, setState] = useState({
-        dataFileName: '',
-        isVideo: false,
-        isPlaying: false,
-        duration: 0,
-        playedSeconds: 0,
-        loadedSeconds: 0,
-        playbackRate: 1,
-        keybinds: KeybindMap.Keybinds,
-        data: {
-            metadata: {},
-            events: []
-        }, // persisted data records
-        activeRecords: [], // activity record between keypress down and keypress up
-        derivedFields: []
-    });
+    const [state, setState] = useGlobal('state');
 
     useEffect(() => {
         var savedKeybinds = JSON.parse(localStorage.getItem('keybinds')) || undefined;
@@ -211,20 +183,36 @@ const App = () => {
         var value = event.target.value;
 
         if (value !== undefined) {
-            if (prop === 'order' && value !== '' && value !== NaN)
+            if (prop === 'order' && value !== '' && !isNaN(value))
                 value = parseInt(value);
 
             if (prop === 'key') {
-                var existingKey = state.keybinds.find(k => k.key == value);
+                var existingKey = state.keybinds.find(k => k.key === value);
                 if (existingKey) {
-                    // TODO - error notification
+                    setKeybindInEdit({ ...keybindInEdit, keyError: true });
                     return;
                 }
-
-
             }
 
-            setKeybindInEdit({ ...keybindInEdit, [prop]: value });
+            if (prop === 'behavior') {
+                var existingBehavior = state.keybinds.find(k => k.behavior === value);
+                if (existingBehavior) {
+                    setKeybindInEdit({ ...keybindInEdit, behaviorError: true });
+                    return;
+                }
+            }
+
+            setKeybindInEdit((keybindInEdit) => {
+                keybindInEdit = { ...keybindInEdit, [prop]: value };
+
+                if (prop === 'behavior' && keybindInEdit.behaviorError)
+                    keybindInEdit.behaviorError = false;
+
+                if (prop === 'key' && keybindInEdit.keyError)
+                    keybindInEdit.keyError = false;
+
+                return keybindInEdit;
+            });
         }
 
     };
@@ -236,33 +224,27 @@ const App = () => {
 
     const handleAddNewKeybind = () => {
         var keybinds = state.keybinds;
-        var id = Math.max.apply(Math, keybinds.map(function (k) { return k.id; })) || 0;
-        var newId = id++;
-        var order = Math.max.apply(Math, keybinds.map(function (k) { return k.order; })) || 0;
-        var newOrder = order++;
+        var id = Math.max.apply(Math, keybinds.map(function (k) { return k.id; }));
+        id = (isFinite(id) ? id + 1 : 0);
+        var order = Math.max.apply(Math, keybinds.map(function (k) { return k.order; }));
+        order = (isFinite(order) ? order + 1 : 0);
 
         keybinds.push({
             id: id, key: '0', order: order, behavior: "New Behavior", active: false
         });
 
-        setState((state) => {
-            handleUpdateKeybinds(keybinds);
-
-            return { ...state, keybind: keybinds };
-        });
+        setState({ ...state, keybinds: keybinds });
+        handleUpdateKeybinds(keybinds);
     };
 
     const handleAcceptEditKeybind = (event) => {
         var keybinds = state.keybinds;
-        var index = keybinds.findIndex(k => k.id == keybindInEdit.id);
+        var index = keybinds.findIndex(k => k.id === keybindInEdit.id);
         keybinds[index] = keybindInEdit;
 
 
-        setState((state) => {
-            handleUpdateKeybinds(keybinds);
-
-            return { ...state, keybind: keybinds };
-        });
+        setState({ ...state, keybinds: keybinds });
+        handleUpdateKeybinds(keybinds);
         handleCancelEditKeybind();
     };
 
@@ -273,11 +255,9 @@ const App = () => {
     const handleDeleteKeybind = (event, keybind) => {
         if (window.confirm("Are you sure you wish to delete this keybind?")) {
             var keybinds = state.keybinds.filter(k => k.id !== keybind.id);
-            setState((state) => {
-                handleUpdateKeybinds(keybinds);
 
-                return { ...state, keybind: keybinds };
-            });
+            setState({ ...state, keybinds: keybinds });
+            handleUpdateKeybinds(keybinds);
         }
     }
 
@@ -429,6 +409,11 @@ const App = () => {
         });
     };
 
+    const handleVideoSizeChange = (event, value) => {
+        if (value !== state.videoSize)
+            setState({ ...state, videoSize: value })
+    };
+
     const handlePlaybackRateChange = (event, value) => {
         if (value !== state.playbackRate)
             setState({ ...state, playbackRate: parseFloat(value) })
@@ -455,9 +440,12 @@ const App = () => {
         let activeRecords = state.activeRecords.filter(obj => obj.key !== keybind.key);
 
         if (activity) {
+            var end = state.playedSeconds.toFixed(3);
+            var id = Math.max.apply(Math, state.data.events.map(function (e) { return e.id; }));
+            id = (isFinite(id) ? id + 1 : 0);
             keybind.active = false;
-            activity.id = state.data.events.length;
-            activity.end = parseFloat(state.playedSeconds.toFixed(3));
+            activity.id = id;
+            activity.end = parseFloat(end);
 
             let dataEvents = state.data.events;
             dataEvents.push(activity);
@@ -494,300 +482,334 @@ const App = () => {
 
 
     return (
-        <div className="App">
-            <input type="file" ref={hiddenVideoUpload} onChange={handleVideoUpload} style={{ display: 'none' }} />
-            <input type="file" ref={hiddenDataUpload} onChange={handleDataUpload} style={{ display: 'none' }} />
-            <StyledMenu
-                className={classes.popoverMenu}
-                anchorEl={anchorSettings}
-                keepMounted
-                open={Boolean(anchorSettings)}
-                onClose={handleSettingsClose}>
-                <ListItemText primary="Settings" align="center" />
-                <ListItemText secondary="Playback Speed" align="center" />
-                <Grid align="center" style={{ paddingBottom: '8px' }}>
-                    <ToggleButtonGroup
-                        size="small"
-                        value={state.playbackRate || 1}
-                        align="center"
-                        exclusive
-                        onChange={handlePlaybackRateChange}
-                        aria-label="playback-rate-togglegroup"
+        <ThemeProvider theme={Theme}>
+            <CssBaseline />
+            <div className="App">
+                <input type="file" ref={hiddenVideoUpload} onChange={handleVideoUpload} style={{ display: 'none' }} />
+                <input type="file" ref={hiddenDataUpload} onChange={handleDataUpload} style={{ display: 'none' }} />
+                <StyledMenu
+                    className={classes.popoverMenu}
+                    anchorEl={anchorSettings}
+                    keepMounted
+                    open={Boolean(anchorSettings)}
+                    onClose={handleSettingsClose}>
+                    <ListItemText primary="Settings" align="center" disabled />
+                    <ListItemText secondary="Video Size" align="center" disabled />
+                    <Grid align="center" style={{ paddingBottom: '8px' }}>
+                        <ToggleButtonGroup
+                            size="small"
+                            value={state.videoSize || '840px'}
+                            align="center"
+                            exclusive
+                            onChange={handleVideoSizeChange}
+                            aria-label="video-size-togglegroup"
+                        >
+                            <ToggleButton value={'600px'} aria-label="centered">
+                                <Typography variant="caption" align="center">600px</Typography>
+                            </ToggleButton>
+                            <ToggleButton value={'840px'} aria-label="centered">
+                                <Typography variant="caption" align="center">840px</Typography>
+                            </ToggleButton>
+                            <ToggleButton value={'1080px'} aria-label="centered">
+                                <Typography variant="caption" align="center">1080px</Typography>
+                            </ToggleButton>
+                        </ToggleButtonGroup>
+                    </Grid>
+                    <ListItemText secondary="Playback Speed" align="center" disabled />
+                    <Grid align="center" style={{ paddingBottom: '8px' }}>
+                        <ToggleButtonGroup
+                            size="small"
+                            value={state.playbackRate || 1}
+                            align="center"
+                            exclusive
+                            onChange={handlePlaybackRateChange}
+                            aria-label="playback-rate-togglegroup"
+                        >
+                            <ToggleButton value={0.5} aria-label="centered">
+                                <Typography variant="caption" align="center">0.5x</Typography>
+                            </ToggleButton>
+                            <ToggleButton value={1.0} aria-label="centered">
+                                <Typography variant="caption" align="center">1.0x</Typography>
+                            </ToggleButton>
+                            <ToggleButton value={1.5} aria-label="centered">
+                                <Typography variant="caption" align="center">1.5x</Typography>
+                            </ToggleButton>
+                            <ToggleButton value={2.0} aria-label="centered">
+                                <Typography variant="caption" align="center">2.0x</Typography>
+                            </ToggleButton>
+                        </ToggleButtonGroup>
+                    </Grid>
+                    <ListItemText secondary="Keybinds" align="center" disabled />
+                    <List component="nav"
+                        aria-label="keybinds-list"
+                        className={classes.root}
+                        style={{ paddingTop: '0px' }}
+                        dense
                     >
-                        <ToggleButton value={0.5} aria-label="centered">
-                            <Typography variant="caption" align="center">0.5x</Typography>
-                        </ToggleButton>
-                        <ToggleButton value={1.0} aria-label="centered">
-                            <Typography variant="caption" align="center">1.0x</Typography>
-                        </ToggleButton>
-                        <ToggleButton value={1.5} aria-label="centered">
-                            <Typography variant="caption" align="center">1.5x</Typography>
-                        </ToggleButton>
-                        <ToggleButton value={2.0} aria-label="centered">
-                            <Typography variant="caption" align="center">2.0x</Typography>
-                        </ToggleButton>
-                    </ToggleButtonGroup>
-                </Grid>
-                <ListItemText secondary="Keybinds" align="center" />
-                <List component="nav"
-                    aria-label="keybinds-list"
-                    className={classes.root}
-                    style={{ paddingTop: '0px' }}
-                    dense
-                >
-                    <ListItem dense>
-                        <ListItemText primary="Pause/Resume" secondary="keybind: space" />
-                    </ListItem>
+                        <ListItem dense>
+                            <ListItemText primary="Pause/Resume" secondary="keybind: space" />
+                        </ListItem>
 
-                    <Popover
-                        open={openEditKeybind}
-                        anchorEl={anchorEditKeybinds}
-                        disableRestoreFocus
-                        anchorOrigin={{
-                            vertical: 'center',
-                            horizontal: 'left',
-                        }}
-                        transformOrigin={{
-                            vertical: 'center',
-                            horizontal: 'right',
-                        }}
-                    >
-                        <Card className={classes.root} variant="outlined">
-                            <CardContent>
-                                <ListItemText primary="Edit Keybind" secondary="Changes are saved to your browser cache" />
-                                <TextField id="keybind-behavior-input" variant="outlined" size="small"
-                                    label="Behavior Name"
-                                    value={keybindInEdit.behavior}
-                                    onChange={handleEditKeybindChange('behavior')}
-                                />
-                                <TextField id="keybind-key-input" variant="outlined" size="small"
-                                    label="Key"
-                                    inputProps={{ maxLength: 1 }}
-                                    value={keybindInEdit.key}
-                                    onChange={handleEditKeybindChange('key')}
-                                />
-                                {/* <TextField id="keybind-order-input" variant="outlined" size="small"
+                        <Popover
+                            open={openEditKeybind}
+                            anchorEl={anchorEditKeybinds}
+                            disableRestoreFocus
+                            anchorOrigin={{
+                                vertical: 'center',
+                                horizontal: 'left',
+                            }}
+                            transformOrigin={{
+                                vertical: 'center',
+                                horizontal: 'right',
+                            }}
+                        >
+                            <Card className={classes.root} variant="outlined">
+                                <CardContent>
+                                    <ListItemText primary="Edit Keybind" secondary="Changes are saved to your browser cache" />
+                                    <TextField id="keybind-behavior-input" variant="outlined" size="small"
+                                        error={keybindInEdit.behaviorError ? true : false}
+                                        helperText={keybindInEdit.behaviorError ? "Invalid value" : ""}
+                                        label="Behavior Name"
+                                        defaultValue={keybindInEdit.behavior}
+                                        onChange={handleEditKeybindChange('behavior')}
+                                    />
+                                    <TextField id="keybind-key-input" variant="outlined" size="small"
+                                        error={keybindInEdit.keyError ? true : false}
+                                        helperText={keybindInEdit.keyError ? "Invalid value" : ""}
+                                        label="Key"
+                                        inputProps={{ maxLength: 1 }}
+                                        defaultValue={keybindInEdit.key}
+                                        onChange={handleEditKeybindChange('key')}
+                                    />
+                                    {/* <TextField id="keybind-order-input" variant="outlined" size="small"
                                     label="Order"
                                     value={keybindInEdit.order}
                                     onChange={handleEditKeybindChange('order')} /> */}
-                            </CardContent>
-                            <CardActions>
-                                <Tooltip title="Accept">
-                                    <IconButton size="small" className={classes.smallButton} onClick={handleAcceptEditKeybind}>
-                                        <CheckCircleIcon fontSize="small" />
-                                    </IconButton>
-                                </Tooltip>
-                                <Tooltip title="Cancel">
-                                    <IconButton size="small" color="secondary" onClick={handleCancelEditKeybind}>
-                                        <CancelIcon fontSize="small" />
-                                    </IconButton>
-                                </Tooltip>
-                            </CardActions>
-                        </Card>
-                    </Popover>
+                                </CardContent>
+                                <CardActions>
+                                    <Tooltip title="Accept">
+                                        <IconButton size="small"
+                                            className={classes.smallButton}
+                                            color="primary"
+                                            disabled={keybindInEdit.keyError || keybindInEdit.behaviorError ? true : false}
+                                            onClick={handleAcceptEditKeybind}>
+                                            <CheckCircleIcon fontSize="small" />
+                                        </IconButton>
+                                    </Tooltip>
+                                    <Tooltip title="Cancel">
+                                        <IconButton size="small"
+                                            color="secondary"
+                                            onClick={handleCancelEditKeybind}>
+                                            <CancelIcon fontSize="small" />
+                                        </IconButton>
+                                    </Tooltip>
+                                </CardActions>
+                            </Card>
+                        </Popover>
 
-                    {state.keybinds.map((keybind) =>
-                        <ListItem key={keybind.id} dense>
-                            <ListItemText primary={keybind.behavior} secondary={`keybind: ${keybind.key}`} />
-                            <Tooltip title="Edit Keybind">
-                                <IconButton size="small" className={classes.smallButton} onClick={(e) => (handleTriggerEditKeybind(e, keybind))}>
-                                    <EditIcon fontSize="small" />
+                        {state.keybinds.map((keybind) =>
+                            <ListItem key={keybind.id} dense>
+                                <ListItemText primary={keybind.behavior} secondary={`keybind: ${keybind.key}`} />
+                                <Tooltip title="Edit Keybind">
+                                    <IconButton size="small" color="primary" onClick={(e) => (handleTriggerEditKeybind(e, keybind))}>
+                                        <EditIcon fontSize="small" />
+                                    </IconButton>
+                                </Tooltip>
+                                <Tooltip title="Delete Keybind">
+                                    <IconButton size="small" color="secondary" onClick={(e) => (handleDeleteKeybind(e, keybind))}>
+                                        <DeleteIcon fontSize="small" />
+                                    </IconButton>
+                                </Tooltip>
+                            </ListItem>
+                        )}
+                        <Grid align="center">
+                            <Tooltip title="Add New Keybind">
+                                <IconButton color="primary" size="small" onClick={handleAddNewKeybind}>
+                                    <AddCircleIcon fontSize="small" />
                                 </IconButton>
                             </Tooltip>
-                            <Tooltip title="Delete Keybind">
-                                <IconButton color="secondary" size="small" onClick={(e) => (handleDeleteKeybind(e, keybind))}>
-                                    <DeleteIcon fontSize="small" />
+                            <Tooltip title="Reset to Defaults">
+                                <IconButton color="primary" size="small" onClick={handleResetSettings}>
+                                    <SettingsBackupRestoreIcon fontSize="small" />
                                 </IconButton>
                             </Tooltip>
-                        </ListItem>
+                        </Grid>
+
+
+                    </List>
+                </StyledMenu>
+
+                <AppBar position="fixed" color="primary" >
+                    <Toolbar className={classes.toolbar}>
+                        <Typography variant="h5" component="h1" className={classes.title}>Video Keypress</Typography>
+                        <Grid container alignItems="center" className={classes.menu}>
+                            {state.dataFileName && (
+                                <Tooltip title={state.dataFileName}>
+                                    <Grid item>
+                                        <Typography variant="caption" display="block" className={classes.restrictedText}>Current {state.isVideo ? "Video" : "Data"}:</Typography>
+                                        <Typography variant="overline" display="block" className={classes.restrictedText}>{state.dataFileName}</Typography>
+                                    </Grid>
+                                </Tooltip>
+
+                            )}
+                            {state.dataFileName && (
+                                <Divider orientation="vertical" flexItem />
+                            )}
+                            {state.dataFileName && (
+                                <Tooltip title="Download Data">
+                                    <IconButton aria-label="download data"
+                                        color="inherit"
+                                        className={classes.button}
+                                        onClick={handleDownloadData}>
+                                        <GetAppIcon />
+                                    </IconButton>
+                                </Tooltip>
+                            )}
+                            {state.dataFileName && (
+                                <Divider orientation="vertical" flexItem />
+                            )}
+                            {state.dataFileName && (
+                                <Tooltip title="Download SVG">
+                                    <IconButton aria-label="download svg"
+                                        color="inherit"
+                                        className={classes.button}
+                                        onClick={handleDownloadSVG}>
+                                        <ImageIcon />
+                                    </IconButton>
+                                </Tooltip>
+                            )}
+                            {state.dataFileName && (
+                                <Divider orientation="vertical" flexItem />
+                            )}
+                            {state.dataFileName && (
+                                <Tooltip title="Unset Video">
+                                    <IconButton aria-label="unset video"
+                                        color="inherit"
+                                        className={classes.button}
+                                        onClick={resetVideo}>
+                                        <CancelIcon />
+                                    </IconButton>
+                                </Tooltip>
+                            )}
+                            {state.dataFileName && (
+                                <Divider orientation="vertical" flexItem />
+                            )}
+
+                            <Tooltip title="Select Video">
+                                <IconButton aria-label="select video"
+                                    color="inherit"
+                                    className={classes.button}
+                                    onClick={(e) => handleVideoSelect(e)}>
+                                    <MovieIcon />
+                                </IconButton>
+                            </Tooltip>
+                            <Divider orientation="vertical" flexItem />
+                            <Tooltip title="Select Data">
+                                <IconButton aria-label="select data"
+                                    color="inherit"
+                                    className={classes.button}
+                                    onClick={handleDataSelect}>
+                                    <CodeIcon />
+                                </IconButton>
+                            </Tooltip>
+                            <Divider orientation="vertical" flexItem />
+                            <Tooltip title="Settings">
+                                <IconButton aria-label="settings"
+                                    color="inherit"
+                                    aria-haspopup="true"
+                                    onClick={handleSettingsClick}
+                                    className={classes.button}>
+                                    <SettingsIcon />
+                                </IconButton>
+                            </Tooltip>
+                        </Grid>
+                    </Toolbar>
+                </AppBar>
+                <div className={classes.content}>
+                    {!state.dataFileName && (
+                        <div align="center">
+                            <Typography variant="caption" display="block" align="center" gutterBottom>Please select a video or select data from a previous session!</Typography>
+                            <Tooltip title="Select Video" align="center">
+                                <IconButton aria-label="select video"
+                                    color="primary"
+                                    className={classes.largeButton}
+                                    onClick={(e) => handleVideoSelect(e)}>
+                                    <MovieIcon />
+                                </IconButton>
+                            </Tooltip>
+                            <Tooltip title="Select Data" align="center">
+                                <IconButton aria-label="select video"
+                                    color="primary"
+                                    className={classes.largeButton}
+                                    onClick={(e) => handleDataSelect(e)}>
+                                    <CodeIcon />
+                                </IconButton>
+                            </Tooltip>
+                        </div>
                     )}
-                    <Grid align="center">
-                        <Tooltip title="Add New Keybind">
-                            <IconButton color="primary" size="small" className={classes.smallButton} onClick={handleAddNewKeybind}>
-                                <AddCircleIcon fontSize="small" />
-                            </IconButton>
-                        </Tooltip>
-                        <Tooltip title="Reset to Defaults">
-                            <IconButton color="primary" size="small" className={classes.smallButton} onClick={handleResetSettings}>
-                                <SettingsBackupRestoreIcon fontSize="small" />
-                            </IconButton>
-                        </Tooltip>
-                    </Grid>
 
-
-                </List>
-            </StyledMenu>
-
-            <AppBar position="fixed" style={{ background: '#469FAE' }}>
-                <Toolbar className={classes.toolbar}>
-                    <Typography variant="h5" component="h1" className={classes.title}>Video Keypress</Typography>
-                    <Grid container alignItems="center" className={classes.menu}>
-                        {state.dataFileName && (
-                            <Tooltip title={state.dataFileName}>
-                                <Grid item>
-                                    <Typography variant="caption" display="block" className={classes.restrictedText}>Current {state.isVideo ? "Video" : "Data"}:</Typography>
-                                    <Typography variant="overline" display="block" className={classes.restrictedText}>{state.dataFileName}</Typography>
-                                </Grid>
-                            </Tooltip>
-
-                        )}
-                        {state.dataFileName && (
-                            <Divider orientation="vertical" flexItem />
-                        )}
-                        {state.dataFileName && (
-                            <Tooltip title="Download Data">
-                                <IconButton aria-label="download data"
-                                    color="inherit"
-                                    className={classes.button}
-                                    onClick={handleDownloadData}>
-                                    <GetAppIcon />
-                                </IconButton>
-                            </Tooltip>
-                        )}
-                        {state.dataFileName && (
-                            <Divider orientation="vertical" flexItem />
-                        )}
-                        {state.dataFileName && (
-                            <Tooltip title="Download SVG">
-                                <IconButton aria-label="download svg"
-                                    color="inherit"
-                                    className={classes.button}
-                                    onClick={handleDownloadSVG}>
-                                    <ImageIcon />
-                                </IconButton>
-                            </Tooltip>
-                        )}
-                        {state.dataFileName && (
-                            <Divider orientation="vertical" flexItem />
-                        )}
-                        {state.dataFileName && (
-                            <Tooltip title="Unset Video">
-                                <IconButton aria-label="unset video"
-                                    color="inherit"
-                                    className={classes.button}
-                                    onClick={resetVideo}>
-                                    <CancelIcon />
-                                </IconButton>
-                            </Tooltip>
-                        )}
-                        {state.dataFileName && (
-                            <Divider orientation="vertical" flexItem />
-                        )}
-
-                        <Tooltip title="Select Video">
-                            <IconButton aria-label="select video"
-                                color="inherit"
-                                className={classes.button}
-                                onClick={(e) => handleVideoSelect(e)}>
-                                <MovieIcon />
-                            </IconButton>
-                        </Tooltip>
-                        <Divider orientation="vertical" flexItem />
-                        <Tooltip title="Select Data">
-                            <IconButton aria-label="select data"
-                                color="inherit"
-                                className={classes.button}
-                                onClick={handleDataSelect}>
-                                <CodeIcon />
-                            </IconButton>
-                        </Tooltip>
-                        <Divider orientation="vertical" flexItem />
-                        <Tooltip title="Settings">
-                            <IconButton aria-label="settings"
-                                color="inherit"
-                                aria-haspopup="true"
-                                onClick={handleSettingsClick}
-                                className={classes.button}>
-                                <SettingsIcon />
-                            </IconButton>
-                        </Tooltip>
-                    </Grid>
-                </Toolbar>
-            </AppBar>
-            <div className={classes.content}>
-                {!state.dataFileName && (
-                    <div align="center">
-                        <Typography variant="caption" display="block" align="center" gutterBottom>Please select a video or select data from a previous session!</Typography>
-                        <Tooltip title="Select Video" align="center">
-                            <IconButton aria-label="select video"
-                                color="inherit"
-                                className={classes.largeButton}
-                                onClick={(e) => handleVideoSelect(e)}>
-                                <MovieIcon />
-                            </IconButton>
-                        </Tooltip>
-                        <Tooltip title="Select Data" align="center">
-                            <IconButton aria-label="select video"
-                                color="inherit"
-                                className={classes.largeButton}
-                                onClick={(e) => handleDataSelect(e)}>
-                                <CodeIcon />
-                            </IconButton>
-                        </Tooltip>
-                    </div>
-                )}
-
-                <div className="Row">
-                    <div className="VideoPlay">
-                        {state.dataFileName && !state.isVideo && (
-                            <div className={classes.dataText}><pre>{JSON.stringify(state.data, undefined, 2)}</pre></div>
-                        )}
-                        {state.dataFileName && state.isVideo && (
-                            <ReactPlayer url={state.videoFilePath}
-                                className={classes.reactPlayer}
-                                playing={isPlayingBuffer}
-                                width="840px"
-                                height="100%"
-                                autoPlay={false}
-                                muted={true}
-                                controls={true}
-                                onDuration={handleDuration}
-                                onProgress={handleProgress}
-                                playbackRate={state.playbackRate || 1}
-                                onPause={handleOnPauseStop}
-                                onStart={handleOnStartPlay}
-                                onPlay={handleOnStartPlay}
-                            />
-                        )}
-                        <div className="Row">
-                            <Chart state={state} />
+                    <div className="Row">
+                        <div className="VideoPlay">
+                            {state.dataFileName && !state.isVideo && (
+                                <div className={classes.dataText}><pre>{JSON.stringify(state.data, undefined, 2)}</pre></div>
+                            )}
+                            {state.dataFileName && state.isVideo && (
+                                <ReactPlayer url={state.videoFilePath}
+                                    className={classes.reactPlayer}
+                                    playing={isPlayingBuffer}
+                                    width={state.videoSize}
+                                    height="100%"
+                                    autoPlay={false}
+                                    muted={true}
+                                    controls={true}
+                                    onDuration={handleDuration}
+                                    onProgress={handleProgress}
+                                    playbackRate={state.playbackRate || 1}
+                                    onPause={handleOnPauseStop}
+                                    onStart={handleOnStartPlay}
+                                    onPlay={handleOnStartPlay}
+                                />
+                            )}
+                            <div className="Row">
+                                <Chart state={state} />
+                            </div>
                         </div>
                     </div>
                 </div>
-            </div>
 
-            <AppBar position="fixed" color="transparent" className={classes.bottomAppBar}>
-                <Toolbar className={classes.bottomToolbar}>
-                    <Grid container alignItems="center" spacing={2}>
-                        <Grid item xs={6}>
-                            <Typography variant="caption" align="center" gutterBottom>
-                                No data is transfered. All data remains in your browser.
+                <AppBar position="fixed" color="primary" className={classes.bottomAppBar}>
+                    <Toolbar className={classes.bottomToolbar}>
+                        <Grid container alignItems="center" spacing={2}>
+                            <Grid item xs={6}>
+                                <Typography variant="caption" align="center" gutterBottom>
+                                    No data is transfered. All data remains in your browser.
                             </Typography>
-                        </Grid>
-                        <Grid item xs={1}>
-                            <Tooltip title="Visit GitHub Repo">
-                                <IconButton aria-label="visit github repo"
-                                    color="inherit"
-                                    className={classes.button}
-                                    onClick={handleNavigateToGitHub}>
-                                    <GitHubIcon />
-                                </IconButton>
-                            </Tooltip>
-                        </Grid>
-                        <Grid item xs={2}>
-                            <Typography variant="caption" align="center" gutterBottom>
-                                Version {packageJson.version}
+                            </Grid>
+                            <Grid item xs={1}>
+                                <Tooltip title="Visit GitHub Repo">
+                                    <IconButton aria-label="visit github repo"
+                                        color="inherit"
+                                        className={classes.button}
+                                        onClick={handleNavigateToGitHub}>
+                                        <GitHubIcon />
+                                    </IconButton>
+                                </Tooltip>
+                            </Grid>
+                            <Grid item xs={1}>
+                                <Typography variant="caption" align="center" gutterBottom>
+                                    v{packageJson.version}
+                                </Typography>
+                            </Grid>
+                            <Grid item xs={4}>
+                                <Typography variant="caption" align="center" gutterBottom>
+                                    GNU General Public License
                             </Typography>
+                            </Grid>
                         </Grid>
-                        <Grid item xs={3}>
-                            <Typography variant="caption" align="center" gutterBottom>
-                                GNU General Public License
-                            </Typography>
-                        </Grid>
-                    </Grid>
-                </Toolbar>
-            </AppBar>
-        </div >
+                    </Toolbar>
+                </AppBar>
+            </div >
+        </ThemeProvider>
     );
 }
 

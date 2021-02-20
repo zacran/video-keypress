@@ -1,14 +1,24 @@
-import React, { useState, useEffect } from "react";
-import { Chart as GoogleChart } from "react-google-charts";
-import Typography from '@material-ui/core/Typography';
-import Grid from '@material-ui/core/Grid';
-import Paper from '@material-ui/core/Paper';
-import KeybindMap from "./keybindMap"
+import Accordion from '@material-ui/core/Accordion';
+import AccordionDetails from '@material-ui/core/AccordionDetails';
+import AccordionSummary from '@material-ui/core/AccordionSummary';
+import Button from '@material-ui/core/Button';
+import IconButton from '@material-ui/core/IconButton';
+import Snackbar from '@material-ui/core/Snackbar';
 import { makeStyles } from '@material-ui/core/styles';
+import Typography from '@material-ui/core/Typography';
+import { DataGrid } from '@material-ui/data-grid';
+import CloseIcon from '@material-ui/icons/Close';
+import DeleteIcon from '@material-ui/icons/Delete';
+import ExpandMoreIcon from '@material-ui/icons/ExpandMore';
+import MuiAlert from '@material-ui/lab/Alert';
+import { useEffect, useState } from "react";
+import React, { useGlobal } from 'reactn';
+import { Chart as GoogleChart } from "react-google-charts";
 import "./App.css";
 
-const COMPUTE_DERIVED_FIELDS_INTERVAL = 1000;
+const COMPUTE_DERIVED_FIELDS_INTERVAL = 1000; // In milliseconds
 const MIN_EVENT_DURATION = 0.01; // In seconds
+const EVENT_LABEL = "Event: "
 
 function convertToMilliseconds(value) {
     return value * 1000
@@ -24,13 +34,23 @@ const useStyles = makeStyles((theme) => ({
     root: {
         flexGrow: 1,
         margin: 'auto',
-        maxWidth: '600px'
+        maxWidth: '600px',
+    },
+    accordion: {
+        margin: 'auto',
+        maxWidth: '840px',
+        marginBottom: '20px',
+    },
+    details: {
+        flexDirection: "column"
     },
     paper: {
         padding: theme.spacing(1),
         fontSize: '12px',
         textAlign: 'center',
-        color: theme.palette.text.secondary,
+        backgroundColor: theme.palette.primary.main,
+        color: theme.palette.secondary.contrastText,
+        flexBasis: '25%',
     },
     control: {
         padding: theme.spacing(2),
@@ -42,6 +62,9 @@ const Chart = (props) => {
     const [derivedFields, setDerivedFields] = useState([]);
     const [cachedNumHeaderRows, setCachedNumHeaderRows] = useState(0);
     const [cachedFormattedDataSize, setCachedFormattedDataSize] = useState(0);
+    const [selectedChartElement, setSelectedChartElement] = useState({});
+    const [deletedChartElement, setDeletedChartElement] = useState({});
+    const [state, setState] = useGlobal('state');
 
     const classes = useStyles();
 
@@ -69,9 +92,9 @@ const Chart = (props) => {
         });
 
         var tempDerivedFields = [];
-        const keybindMap = props.state.keybinds;
+        const keybindMap = state.keybinds;
 
-
+        var id = 0;
         // Derive fields for each unique behavior
         uniqueBehaviors.forEach(behavior => {
             var occurences = 0, totalDuration = 0;
@@ -90,7 +113,8 @@ const Chart = (props) => {
             if (occurences === 0) avgDuration = 0;
 
             var derivedField = {
-                order: order,
+                id: id,
+                order: null,
                 behavior: behavior,
                 occurences: occurences,
                 totalDuration: totalDuration,
@@ -98,6 +122,7 @@ const Chart = (props) => {
             }
 
             tempDerivedFields.push(derivedField);
+            id++;
         });
 
         // Sort derived fields by order property
@@ -113,11 +138,9 @@ const Chart = (props) => {
 
         setDerivedFields((derivedFields) => {
             derivedFields = tempDerivedFields;
-            console.log(derivedFields);
-
             return derivedFields;
         });
-        props.state.derivedFields = derivedFields;
+        state.derivedFields = derivedFields;
     };
 
     const formatEvent = (latestEvent) => {
@@ -126,7 +149,7 @@ const Chart = (props) => {
 
         // Seach existing records for similar start, end, duration times and adjust by the MIN_EVENT_DURATION
         // This is to account for key presses that happen faster than the update cycle of React
-        props.state.data.events.forEach(obj => {
+        state.data.events.forEach(obj => {
             if (obj.id !== latestEvent.id && obj.behavior === latestEvent.behavior) {
                 if (obj.start === latestEvent.start) {
                     console.warn("Adjusted event start time due to existing similar events: " + latestEvent.id);
@@ -147,16 +170,16 @@ const Chart = (props) => {
 
         return [
             latestEvent.behavior,
-            "Event: #" + latestEvent.id,
+            EVENT_LABEL + latestEvent.id,
             convertToMilliseconds(latestEvent.start),
             convertToMilliseconds(latestEvent.end)
         ];
     };
 
     useEffect(() => {
-        var isDataLoaded = (props.state.dataFileName !== '');
+        var isDataLoaded = (state.dataFileName !== '');
         var isFormattedDataEmpty = (formattedData.length === 0);
-        var areEventsEmpty = (props.state.data.events && props.state.data.events.length === 0);
+        var areEventsEmpty = (state.data.events && state.data.events.length === 0);
 
         // Video has been cleared, reset the chart
         if (!isDataLoaded && formattedData.length !== 0) {
@@ -173,20 +196,20 @@ const Chart = (props) => {
                     { type: 'number', id: 'End' },
                 ],
                 [
-                    "Behavior", "Meta", 0, convertToMilliseconds(props.state.data.metadata.duration)
+                    "Behavior", "Meta", 0, convertToMilliseconds(state.data.metadata.duration)
                 ]
             ];
 
-            if (props.state.isVideo && areEventsEmpty) {
+            if (state.isVideo && areEventsEmpty) {
                 // Adding empty Behavior records to force a consistent order
-                props.state.keybinds.forEach(obj => {
+                state.keybinds.forEach(obj => {
                     headerRows.push([obj.behavior, "Meta", 0, 0]);
                 });
             } else if (!areEventsEmpty) {
                 // Likely coming from a data upload - find unique behaviors and sort them alphabetically if order property does not exist
                 // Find unqiue behaviors in existing data
                 const uniqueBehaviors = [];
-                props.state.data.events.forEach(event => {
+                state.data.events.forEach(event => {
                     if (uniqueBehaviors.indexOf(event.behavior) === -1) {
                         uniqueBehaviors.push(event.behavior)
                     }
@@ -207,17 +230,18 @@ const Chart = (props) => {
         }
 
         // Check if events exist to avoid running code when idle
-        var eventsExist = (props.state.data.events && props.state.data.events.length > 0);
+        var eventsExist = (state.data.events && state.data.events.length > 0);
         // Check if a new event exists -- length of data.events plus header rows
-        var newEventExists = ((props.state.data.events.length + cachedNumHeaderRows) > formattedData.length);
+        var newEventExists = ((state.data.events.length + cachedNumHeaderRows) > formattedData.length);
 
         // Add new event and compute derived fields when new record is persisted
         if (eventsExist && newEventExists) {
-            var eventsDiff = ((props.state.data.events.length + cachedNumHeaderRows) - formattedData.length);
+            console.log("Adding new event");
+            var eventsDiff = ((state.data.events.length + cachedNumHeaderRows) - formattedData.length);
             var formattedEvents = [], unformattedEvent, formattedEvent;
 
             while (eventsDiff > 0) {
-                unformattedEvent = props.state.data.events[props.state.data.events.length - eventsDiff];
+                unformattedEvent = state.data.events[state.data.events.length - eventsDiff];
                 formattedEvent = formatEvent(unformattedEvent);
                 formattedEvents.push(formattedEvent);
                 eventsDiff--;
@@ -227,37 +251,80 @@ const Chart = (props) => {
         }
     });
 
+    const derivedFieldsColumns = [
+        { field: 'behavior', headerName: 'Behavior', width: 200 },
+        { field: 'occurences', headerName: 'Occurences', type: 'number', width: 200, valueFormatter: (params) => params.value, },
+        { field: 'avgDuration', headerName: 'Avg Duration', type: 'number', width: 200, valueFormatter: (params) => formatTime(params.value), },
+        { field: 'totalDuration', headerName: 'Total Duration', type: 'number', width: 200, valueFormatter: (params) => formatTime(params.value), },
+    ];
+
+    const getDerivedFieldsTableHeight = () => {
+        return (derivedFields.length > 0 ? (55 * derivedFields.length) + 3 : 75);
+    };
+
+    const handleResolveSelectedChartElement = (event, reason) => {
+        if (reason === 'clickaway') {
+            return;
+        }
+
+        setSelectedChartElement({ active: false });
+        setDeletedChartElement({ active: false });
+    };
+
+    const handleResolveDeletedChartElement = (event, reason) => {
+        setDeletedChartElement({ active: false });
+    };
+
+    const handleUndoDeletedChartElement = () => {
+        var formattedData = [
+            deletedChartElement.behavior,
+            deletedChartElement.id,
+        ];
+    };
+
+    const handleDeleteSelectedChartElement = () => {
+        // Remove data with that ID from formattedData and from the data
+        var adjustedFormattedData = formattedData.filter(function (arr) {
+            return arr[1] !== selectedChartElement.id;
+        });
+        setFormattedData(adjustedFormattedData);
+
+        var id = parseInt(selectedChartElement.id.replace(EVENT_LABEL, ""));
+        var adjustedData = state.data.events.filter(function (obj) {
+            return obj.id !== id;
+        });
+        setState({
+            ...state,
+            data: {
+                events: adjustedData,
+                metadata: {
+                    ...state.data.metadata
+                }
+            }
+        });
+
+        setDeletedChartElement(selectedChartElement);
+        setSelectedChartElement({ active: false });
+    };
+
     return (
         <div className="Row">
-            {derivedFields.length > 0 && (
-                derivedFields.map((derivedField) =>
-                    <Grid container className={classes.root} spacing={2} key={derivedField.behavior}>
-                        <Grid item xs={3}>
-                            <Paper className={classes.paper}>
-                                <Typography variant="caption" display="inline" gutterBottom>    Behavior:   </Typography>
-                                <Typography variant="subtitle2" display="block" align="center" gutterBottom >{derivedField.behavior}</Typography>
-                            </Paper>
-                        </Grid>
-                        <Grid item xs={3}>
-                            <Paper className={classes.paper}>
-                                <Typography variant="caption" display="inline" gutterBottom>    Occurences: </Typography>
-                                <Typography variant="subtitle2" display="block" align="center" gutterBottom >{derivedField.occurences}</Typography>
-                            </Paper>
-                        </Grid>
-                        <Grid item xs={3}>
-                            <Paper className={classes.paper}>
-                                <Typography variant="caption" display="inline" gutterBottom>    Avg Duration:   </Typography>
-                                <Typography variant="subtitle2" display="block" align="center" gutterBottom >{formatTime(derivedField.avgDuration)}</Typography>
-                            </Paper>
-                        </Grid>
-                        <Grid item xs={3}>
-                            <Paper className={classes.paper}>
-                                <Typography variant="caption" display="inline" gutterBottom>    Total Duration:    </Typography>
-                                <Typography variant="subtitle2" display="block" align="center" gutterBottom >{formatTime(derivedField.totalDuration)}</Typography>
-                            </Paper>
-                        </Grid>
-                    </Grid>
-                )
+            {props.state.dataFileName !== '' && (
+                <Accordion className={classes.accordion}>
+                    <AccordionSummary expandIcon={<ExpandMoreIcon />} aria-controls="derivedfields-content">
+                        <Typography variant="caption">Derived Fields</Typography>
+                    </AccordionSummary>
+                    <AccordionDetails className={classes.accordion}>
+                        <div style={{ height: getDerivedFieldsTableHeight(), width: '100%' }}>
+                            <DataGrid rows={derivedFields}
+                                columns={derivedFieldsColumns}
+                                autoPageSize={true}
+                                density="compact"
+                                hideFooter={true}
+                            />
+                        </div>
+                    </AccordionDetails>
+                </Accordion>
             )}
             <div id="chart-container" className="GoogleChart">
                 {formattedData.length > 1 && (
@@ -275,8 +342,58 @@ const Chart = (props) => {
                             colors: ['transparent', '#469FAE', '#3ECDB6', '#C09BD8', '#F67E5C', '#CA1252', '#DD5B5C', '#D9959A', '#938D99', '#5E614A'],
                         }}
                         rootProps={{ 'data-testid': '6' }}
+                        chartEvents={[
+                            {
+                                eventName: 'select',
+                                callback: ({ chartWrapper }) => {
+                                    var chart = chartWrapper.getChart()
+                                    var selection = chart.getSelection()[0]
+                                    var formattedSelection = formattedData[selection.row + 1];
+                                    var selectedObject = {
+                                        behavior: formattedSelection[0],
+                                        id: formattedSelection[1],
+                                        start: formattedSelection[2],
+                                        end: formattedSelection[3],
+                                        active: true
+                                    };
+                                    if (selectedObject.id !== 'Meta')
+                                        setSelectedChartElement(selectedObject);
+
+                                    console.log(selectedObject);
+                                },
+                            },
+                        ]}
                     />
                 )}
+            </div>
+            <div>
+                <Snackbar
+                    open={selectedChartElement.active}
+                    autoHideDuration={null}
+                    onClose={handleResolveSelectedChartElement}
+                    message={`Selected: ${selectedChartElement.id}`}
+                    action={
+                        <React.Fragment>
+                            <IconButton size="small" aria-label="delete" color="secondary" onClick={handleDeleteSelectedChartElement}>
+                                <DeleteIcon fontSize="small" />
+                            </IconButton>
+                            <IconButton size="small" aria-label="close" color="inherit" onClick={handleResolveSelectedChartElement}>
+                                <CloseIcon fontSize="small" />
+                            </IconButton>
+                        </React.Fragment>
+                    }>
+                </Snackbar>
+                {/* <Snackbar
+                    open={deletedChartElement.active}
+                    autoHideDuration={6000}
+                    onClose={handleResolveDeletedChartElement}
+                    message={`Deleted: ${deletedChartElement.id}`}
+                    action={
+                        <Button color="secondary" size="small" onClick={handleUndoDeletedChartElement}>
+                            Undo
+                        </Button>
+                    }>
+                </Snackbar> */}
             </div>
         </div>
     );
