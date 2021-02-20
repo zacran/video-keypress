@@ -224,20 +224,17 @@ const App = () => {
 
     const handleAddNewKeybind = () => {
         var keybinds = state.keybinds;
-        var id = Math.max.apply(Math, keybinds.map(function (k) { return k.id; })) || 0;
-        var newId = id++;
-        var order = Math.max.apply(Math, keybinds.map(function (k) { return k.order; })) || 0;
-        var newOrder = order++;
+        var id = Math.max.apply(Math, keybinds.map(function (k) { return k.id; }));
+        id = (isFinite(id) ? id + 1 : 0);
+        var order = Math.max.apply(Math, keybinds.map(function (k) { return k.order; }));
+        order = (isFinite(order) ? order + 1 : 0);
 
         keybinds.push({
             id: id, key: '0', order: order, behavior: "New Behavior", active: false
         });
 
-        setState((state) => {
-            handleUpdateKeybinds(keybinds);
-
-            return { ...state, keybind: keybinds };
-        });
+        setState({ ...state, keybinds: keybinds });
+        handleUpdateKeybinds(keybinds);
     };
 
     const handleAcceptEditKeybind = (event) => {
@@ -246,11 +243,8 @@ const App = () => {
         keybinds[index] = keybindInEdit;
 
 
-        setState((state) => {
-            handleUpdateKeybinds(keybinds);
-
-            return { ...state, keybind: keybinds };
-        });
+        setState({ ...state, keybinds: keybinds });
+        handleUpdateKeybinds(keybinds);
         handleCancelEditKeybind();
     };
 
@@ -261,11 +255,9 @@ const App = () => {
     const handleDeleteKeybind = (event, keybind) => {
         if (window.confirm("Are you sure you wish to delete this keybind?")) {
             var keybinds = state.keybinds.filter(k => k.id !== keybind.id);
-            setState((state) => {
-                handleUpdateKeybinds(keybinds);
 
-                return { ...state, keybind: keybinds };
-            });
+            setState({ ...state, keybinds: keybinds });
+            handleUpdateKeybinds(keybinds);
         }
     }
 
@@ -452,7 +444,6 @@ const App = () => {
             var id = Math.max.apply(Math, state.data.events.map(function (e) { return e.id; }));
             id = (isFinite(id) ? id + 1 : 0);
             keybind.active = false;
-            // activity.id = keybind.behavior + " @ " + end;
             activity.id = id;
             activity.end = parseFloat(end);
 
