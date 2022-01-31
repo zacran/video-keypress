@@ -4,26 +4,32 @@
   "version": "1.0.7",
   "private": true,
   "dependencies": {
-    "@fortawesome/fontawesome-svg-core": "^1.2.32",
-    "@fortawesome/free-solid-svg-icons": "^5.15.1",
-    "@fortawesome/react-fontawesome": "^0.1.13",
-    "@material-ui/core": "^4.11.2",
-    "@material-ui/data-grid": "^4.0.0-alpha.19",
+    "@fortawesome/fontawesome-svg-core": "^1.2.36",
+    "@fortawesome/free-solid-svg-icons": "^5.15.4",
+    "@fortawesome/react-fontawesome": "^0.1.17",
+    "@material-ui/core": "^4.12.3",
+    "@material-ui/data-grid": "^4.0.0-alpha.37",
     "@material-ui/icons": "^4.11.2",
-    "@material-ui/lab": "^4.0.0-alpha.57",
-    "@testing-library/jest-dom": "^5.11.6",
-    "@testing-library/react": "^11.2.2",
-    "@testing-library/user-event": "^12.3.0",
-    "@use-it/event-listener": "^0.1.6",
+    "@material-ui/lab": "^4.0.0-alpha.60",
+    "@testing-library/jest-dom": "^5.16.1",
+    "@testing-library/react": "^11.2.7",
+    "@testing-library/user-event": "^12.8.3",
+    "@use-it/event-listener": "^0.1.7",
+    "css-layout": "^1.1.1",
     "fontsource-roboto": "^4.0.0",
-    "react": "^17.0.1",
+    "gh-pages": "^3.2.3",
+    "node-fetch": "^3.2.0",
+    "postcss": "^8.4.5",
+    "react": "^17.0.2",
     "react-color": "^2.19.3",
-    "react-dom": "^17.0.1",
+    "react-dom": "^17.0.2",
     "react-gantt-timeline": "^0.4.3",
     "react-google-charts": "^3.0.15",
-    "react-player": "^2.7.0",
-    "react-scripts": "4.0.1",
+    "react-player": "^2.9.0",
+    "react-scripts": "^5.0.0",
+    "react-sizeme": "^3.0.2",
     "reactn": "^2.2.7",
+    "typescript": "^4.5.5",
     "web-vitals": "^0.2.4"
   },
   "scripts": {
@@ -51,8 +57,5 @@
       "last 1 firefox version",
       "last 1 safari version"
     ]
-  },
-  "devDependencies": {
-    "gh-pages": "^3.1.0"
   }
 }
