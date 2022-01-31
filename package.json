@@ -1,7 +1,7 @@
 {
   "homepage": "http://zacran.github.io/video-keypress",
   "name": "video-keypress",
-  "version": "1.0.7",
+  "version": "1.1.0",
   "private": true,
   "dependencies": {
     "@fortawesome/fontawesome-svg-core": "^1.2.36",
