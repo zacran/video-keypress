@@ -1,7 +1,7 @@
-import { createMuiTheme } from '@material-ui/core/styles'
-const theme = createMuiTheme({
-    palette: {
-        primary: { 500: '#469FAE' },
-    },
-})
-export default theme
+import { createTheme } from "@material-ui/core/styles";
+const theme = createTheme({
+  palette: {
+    primary: { 500: "#469FAE" },
+  },
+});
+export default theme;
