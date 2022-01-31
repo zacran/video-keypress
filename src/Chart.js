@@ -73,7 +73,6 @@ const Chart = (props) => {
       if (formattedData.length !== cachedFormattedDataSize) {
         setCachedFormattedDataSize(formattedData.length);
         computeDerivedFields();
-        console.log("computeDerivedFields");
       }
     }, COMPUTE_DERIVED_FIELDS_INTERVAL);
     return () => clearInterval(interval);
@@ -123,6 +122,12 @@ const Chart = (props) => {
         avgDuration: avgDuration,
       };
 
+      // Hacky fix to issue with Derived Fields not showing if just 1 element is in the array
+      // May be resolved in later versions of material's data grid but upgrading from mui4 to mui5 broke everything style related
+      // Push same element twice; duplicates are automatically resolved
+      if (derivedFields.length == 0) {
+        tempDerivedFields.push(derivedField);
+      }
       tempDerivedFields.push(derivedField);
       id++;
     });
