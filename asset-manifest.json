@@ -1,20 +1,13 @@
 {
   "files": {
-    "main.css": "/video-keypress/static/css/main.8faf1149.chunk.css",
-    "main.js": "/video-keypress/static/js/main.51e34154.chunk.js",
-    "main.js.map": "/video-keypress/static/js/main.51e34154.chunk.js.map",
-    "runtime-main.js": "/video-keypress/static/js/runtime-main.b223faa5.js",
-    "runtime-main.js.map": "/video-keypress/static/js/runtime-main.b223faa5.js.map",
-    "static/js/2.4623c812.chunk.js": "/video-keypress/static/js/2.4623c812.chunk.js",
-    "static/js/2.4623c812.chunk.js.map": "/video-keypress/static/js/2.4623c812.chunk.js.map",
+    "main.css": "/video-keypress/static/css/main.579768f8.css",
+    "main.js": "/video-keypress/static/js/main.162788a5.js",
     "index.html": "/video-keypress/index.html",
-    "static/css/main.8faf1149.chunk.css.map": "/video-keypress/static/css/main.8faf1149.chunk.css.map",
-    "static/js/2.4623c812.chunk.js.LICENSE.txt": "/video-keypress/static/js/2.4623c812.chunk.js.LICENSE.txt"
+    "main.579768f8.css.map": "/video-keypress/static/css/main.579768f8.css.map",
+    "main.162788a5.js.map": "/video-keypress/static/js/main.162788a5.js.map"
   },
   "entrypoints": [
-    "static/js/runtime-main.b223faa5.js",
-    "static/js/2.4623c812.chunk.js",
-    "static/css/main.8faf1149.chunk.css",
-    "static/js/main.51e34154.chunk.js"
+    "static/css/main.579768f8.css",
+    "static/js/main.162788a5.js"
   ]
 }
