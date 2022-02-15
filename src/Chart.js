@@ -102,7 +102,7 @@ const Chart = (props) => {
             var matchingEvents = data.filter((event) => event[0] === behavior);
             var order = keybindMap.filter((keybind) => keybind.behavior === behavior).order;
 
-            console.log("finding derived fields for " + behavior + " found " + matchingEvents.length + " events");
+            console.log(`Finding derived fields for ${behavior}. Found ${matchingEvents.length} event(s).`);
 
             occurrences = matchingEvents.length;
 
