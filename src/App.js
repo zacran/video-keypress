@@ -311,7 +311,7 @@ const App = () => {
             var video = document.createElement("video");
             var videoFilePath = URL.createObjectURL(uploadedFile);
             video.src = videoFilePath;
-            video.addEventListener("loadedmetadata", function () {
+            video.addEventListener("loadedmetadata", e => {
                 var duration = parseFloat(video.duration.toFixed(2));
                 setState({
                     ...state,
