@@ -316,11 +316,11 @@ const App = () => {
                 setState({
                     ...state,
                     videoFilePath: videoFilePath,
-                    dataFileName: event.target.files[0].name,
+                    dataFileName: uploadedFileName,
                     isVideo: true,
                     data: {
                         metadata: {
-                            fileName: event.target.files[0].name,
+                            fileName: uploadedFileName,
                             scoringDate: Date.now(),
                             scoringDateText: new Date().toISOString(),
                             duration: duration,
@@ -334,7 +334,6 @@ const App = () => {
             var message = `Selected file was not recognized as a valid video format.`;
             console.log(message);
             setNotification({ active: true, message: message });
-
         }
     };
 
