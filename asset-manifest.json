@@ -1,13 +1,13 @@
 {
   "files": {
     "main.css": "/video-keypress/static/css/main.579768f8.css",
-    "main.js": "/video-keypress/static/js/main.978f5bbe.js",
+    "main.js": "/video-keypress/static/js/main.74571b9d.js",
     "index.html": "/video-keypress/index.html",
     "main.579768f8.css.map": "/video-keypress/static/css/main.579768f8.css.map",
-    "main.978f5bbe.js.map": "/video-keypress/static/js/main.978f5bbe.js.map"
+    "main.74571b9d.js.map": "/video-keypress/static/js/main.74571b9d.js.map"
   },
   "entrypoints": [
     "static/css/main.579768f8.css",
-    "static/js/main.978f5bbe.js"
+    "static/js/main.74571b9d.js"
   ]
 }
