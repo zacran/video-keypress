@@ -305,7 +305,8 @@ const App = () => {
         console.log(`Preparing to upload video: ${event.target.files[0].name}`);
         var uploadedFile = event.target.files[0];
         // Verify video format
-        var isValidFile = (uploadedFile && ['mp4', 'ogg', 'webm', 'mpeg'].includes(uploadedFile.name.split('.').pop().toLowerCase()));
+        var uploadedFileName = uploadedFile.name;
+        var isValidFile = (uploadedFile && ['mp4', 'ogg', 'webm', 'mpeg'].includes(uploadedFileName.split('.').pop().toLowerCase()));
         if (isValidFile) {
             var video = document.createElement("video");
             var videoFilePath = URL.createObjectURL(uploadedFile);
