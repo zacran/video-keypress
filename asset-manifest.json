@@ -1,13 +1,20 @@
 {
   "files": {
-    "main.css": "/video-keypress/static/css/main.579768f8.css",
-    "main.js": "/video-keypress/static/js/main.8ef1d9e4.js",
+    "main.css": "/video-keypress/static/css/main.8faf1149.chunk.css",
+    "main.js": "/video-keypress/static/js/main.68f27678.chunk.js",
+    "main.js.map": "/video-keypress/static/js/main.68f27678.chunk.js.map",
+    "runtime-main.js": "/video-keypress/static/js/runtime-main.97d7a2f4.js",
+    "runtime-main.js.map": "/video-keypress/static/js/runtime-main.97d7a2f4.js.map",
+    "static/js/2.c8e594a5.chunk.js": "/video-keypress/static/js/2.c8e594a5.chunk.js",
+    "static/js/2.c8e594a5.chunk.js.map": "/video-keypress/static/js/2.c8e594a5.chunk.js.map",
     "index.html": "/video-keypress/index.html",
-    "main.579768f8.css.map": "/video-keypress/static/css/main.579768f8.css.map",
-    "main.8ef1d9e4.js.map": "/video-keypress/static/js/main.8ef1d9e4.js.map"
+    "static/css/main.8faf1149.chunk.css.map": "/video-keypress/static/css/main.8faf1149.chunk.css.map",
+    "static/js/2.c8e594a5.chunk.js.LICENSE.txt": "/video-keypress/static/js/2.c8e594a5.chunk.js.LICENSE.txt"
   },
   "entrypoints": [
-    "static/css/main.579768f8.css",
-    "static/js/main.8ef1d9e4.js"
+    "static/js/runtime-main.97d7a2f4.js",
+    "static/js/2.c8e594a5.chunk.js",
+    "static/css/main.8faf1149.chunk.css",
+    "static/js/main.68f27678.chunk.js"
   ]
 }
